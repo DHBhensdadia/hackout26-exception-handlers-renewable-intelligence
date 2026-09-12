@@ -39,20 +39,19 @@ export function SiteFooter() {
             <h4>Product</h4>
             <Link to="/dashboard">Forecast Dashboard</Link>
             <Link to="/dashboard">Site Registry</Link>
-            <Link to="#models">Models</Link>
-            <Link to="#approach">Approach</Link>
+            <Link to="#modules">Models</Link>
+            <Link to="#manifesto">Principle</Link>
           </div>
           <div className="footer__col">
             <h4>Platform</h4>
             <Link to="#horizons">Planning Horizons</Link>
             <Link to="#modules">Seven Modules</Link>
-            <Link to="#mvp">MVP Phases</Link>
-            <Link to="#stack">Tech Stack</Link>
+            <Link to="#mvp">Build Runway</Link>
           </div>
           <div className="footer__col">
             <h4>Company</h4>
             <Link to="/dashboard">Dashboard</Link>
-            <Link to="/#approach">About</Link>
+            <Link to="/#manifesto">About</Link>
             <Link to="/#modules">Capabilities</Link>
             <Link to="/#cta">Contact</Link>
           </div>

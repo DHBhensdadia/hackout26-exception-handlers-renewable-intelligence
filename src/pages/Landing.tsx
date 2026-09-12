@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useScrollBehaviour } from "../components/Shell";
 import { SiteHeader } from "../components/SiteNav";
 import { SiteFooter } from "../components/SiteFooter";
 import { CtaBand } from "../components/CtaBand";
 import { Reveal } from "../components/Reveal";
 import { HeroConsole } from "../components/HeroConsole";
-import { Button, ArrowIcon } from "../components/ui";
+import { Button } from "../components/ui";
 
 const FLOW = [
   { n: "01", t: "Data", d: "Weather, historical generation, equipment, demand, economic and demographic signals." },
@@ -45,34 +45,107 @@ const MODULES = [
   { id: "M07", name: "Integrated Investment Optimization", d: "The module that ties the system together — generation + storage + location + timing under real constraints and budget." },
 ];
 
-const SCENARIO = [
-  { n: "01", t: "Weather + history + equipment ingested", d: "Open-Meteo NWP and historical plant output for the region." },
-  { n: "02", t: "Forecast the next 72 hours", d: "The core model predicts solar + wind output hourly." },
-  { n: "03", t: "High solar in afternoon detected", d: "Generation exceeds demand during several peak hours." },
-  { n: "04", t: "Platform flags surplus", d: "Available battery capacity is checked against the surplus window." },
-  { n: "05", t: "Charge storage, quantify curtailment", d: "Recommended dispatch, plus the residual over-generation that would be curtailed." },
-  { n: "06", t: "Same surplus recurs each summer", d: "Seasonal analysis turns a one-off flag into a systematic pattern." },
-  { n: "07", t: "Industrial demand growing", d: "Demand forecasting shows load will grow over the next five years." },
-  { n: "08", t: "Scenarios evaluated against ₹500 cr", d: "Solar, wind, storage and hybrid options scored on ROI, risk and capacity adequacy." },
-  { n: "09", t: "Dashboard presents the strategy", d: "Best generation + storage allocation, with trade-offs explained." },
+const PRINCIPLE = [
+  {
+    n: "01",
+    t: "Predict power",
+    d: "Hourly solar and wind generation for the next 24–72 hours, issued with calibrated uncertainty bands rather than a single guess.",
+  },
+  {
+    n: "02",
+    t: "Optimize its use",
+    d: "Compare forecast generation against demand and storage — then recommend charging, discharging, backup or curtailment.",
+  },
+  {
+    n: "03",
+    t: "Understand future needs",
+    d: "Turn recurring seasonal patterns, equipment reliability and demand growth into planning knowledge.",
+  },
+  {
+    n: "04",
+    t: "Invest efficiently",
+    d: "Score solar, wind, storage and hybrid options against budget, risk and expected return.",
+  },
+];
+
+const QUESTIONS = [
+  {
+    q: "What will we generate?",
+    a: "Forecast solar and wind output for the next 24–72 hours with honest uncertainty.",
+  },
+  {
+    q: "What should we do with that power?",
+    a: "Surplus or shortage — charge storage, hold backup, or curtail only when necessary.",
+  },
+  {
+    q: "What risks should we prepare for?",
+    a: "Recurring seasonal patterns, equipment failure risk, low-generation windows.",
+  },
+  {
+    q: "Where should we invest next?",
+    a: "Future demand, generation potential, economics and storage constraints converge on a recommendation.",
+  },
 ];
 
 const PHASES = [
-  { tag: "Phase 1 · Core MVP", l: "Historical generation · weather ingestion · 24–72 h solar/wind forecast · surplus/shortage detection · basic dashboard", on: true },
-  { tag: "Phase 2 · Operational Intelligence", l: "Demand forecasting · storage-aware recommendations · seasonal pattern analysis · reliability/failure analysis" },
-  { tag: "Phase 3 · Strategic Planning", l: "Population/industrial demand forecasting · investment comparison · ROI analysis · storage analysis · budget optimization · what-if scenarios" },
+  {
+    phase: "Phase 1",
+    name: "Core MVP",
+    scope: "now" as const,
+    items: [
+      "Historical generation ingestion",
+      "Weather data ingestion",
+      "24–72 h solar & wind forecast",
+      "Surplus / shortage detection",
+      "Basic decision dashboard",
+    ],
+  },
+  {
+    phase: "Phase 2",
+    name: "Operational Intelligence",
+    scope: "next" as const,
+    items: [
+      "Demand forecasting",
+      "Storage-aware recommendations",
+      "Seasonal pattern analysis",
+      "Reliability & failure analysis",
+    ],
+  },
+  {
+    phase: "Phase 3",
+    name: "Strategic Planning",
+    scope: "next" as const,
+    items: [
+      "Population & industrial demand forecasting",
+      "Renewable investment comparison",
+      "ROI analysis",
+      "Storage investment analysis",
+      "Budget optimization",
+      "What-if scenarios",
+    ],
+  },
 ];
 
-const STACK = [
-  "React", "TypeScript", "Vite", "Tailwind CSS",
-  "Python 3.12", "FastAPI", "Pydantic",
-  "Pandas", "NumPy", "XGBoost",
-  "PostgreSQL", "Redis", "Celery",
-  "Google OR-Tools", "Open-Meteo", "Docker",
-];
+function PhaseBlock({ p }: { p: (typeof PHASES)[number] }) {
+  return (
+    <article className="runway__phase">
+      <div className="runway__meta">
+        <span className="idx">{p.phase}</span>
+        {p.scope === "now" && <span className="pill pill--ok">live</span>}
+      </div>
+      <h3 className="runway__name">{p.name}</h3>
+      <ul className="runway__list">
+        {p.items.map((it) => (
+          <li key={it}>{it}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
 
 export default function Landing() {
   useScrollBehaviour();
+  const [openQ, setOpenQ] = useState(0);
 
   return (
     <>
@@ -82,7 +155,6 @@ export default function Landing() {
       <section className="hero hero--app" id="top">
         <div className="hero__shader" />
         <div className="hero__glow" />
-        <div className="hero__word" aria-hidden="true">re-forecast</div>
 
         <div className="wrap">
           <div className="hero__body">
@@ -100,29 +172,40 @@ export default function Landing() {
             </p>
             <div className="hero__actions load s3">
               <Button to="/dashboard">Launch dashboard</Button>
-              <Button to="#approach" variant="ghost">
-                Explore the platform
-              </Button>
             </div>
           </div>
 
           {/* Spec strip of core capability numbers */}
           <div className="specstrip reveal d2">
             <div className="cell">
+              <span className="eyebrow">Forecast horizon</span>
               <div className="num"><em>24–72</em> h</div>
-              <div className="lbl">forecast horizon</div>
+              <div className="lbl">Three days ahead, issued hourly</div>
+              <p className="body">
+                Hourly solar and wind output for the next three days, reissued as
+                each new weather run lands — long enough to schedule storage and
+                backup, short enough to stay accurate.
+              </p>
+              <ul className="meta">
+                <li>Hourly resolution</li>
+                <li>72 h look-ahead</li>
+                <li>Uncertainty bands</li>
+              </ul>
             </div>
             <div className="cell">
+              <span className="eyebrow">Technologies modelled</span>
               <div className="num"><em>solar</em> + <em>wind</em></div>
-              <div className="lbl">technologies modelled</div>
-            </div>
-            <div className="cell">
-              <div className="num"><em>p10 · p50 · p90</em></div>
-              <div className="lbl">calibrated quantile bands</div>
-            </div>
-            <div className="cell">
-              <div className="num"><em>6</em> models</div>
-              <div className="lbl">2 tech × 3 quantiles (xgb-q)</div>
+              <div className="lbl">Site-calibrated, technology-specific models</div>
+              <p className="body">
+                Separate solar and wind models, calibrated per site against
+                geometry, installed capacity and equipment characteristics —
+                driven by weather, physics priors and historical generation.
+              </p>
+              <ul className="meta">
+                <li>Physics-informed priors</li>
+                <li>Site-calibrated</li>
+                <li>Weather-driven</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -134,25 +217,37 @@ export default function Landing() {
           <Reveal className="load s4" style={{ position: "relative" }}>
             <HeroConsole />
           </Reveal>
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "2.2rem" }}>
-            <span className="reveal d1" style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: ".78rem", letterSpacing: ".04em" }}>
-              Live dashboard → <Link to="/dashboard" className="linkarrow">open the forecast console <ArrowIcon /></Link>
-            </span>
-          </div>
         </div>
       </section>
 
-      {/* ============ MANIFESTO ============ */}
+      {/* ============ CORE PRINCIPLE ============ */}
       <section className="section" id="manifesto">
         <div className="wrap">
-          <div className="manifesto reveal">
-            <span className="manifesto__rule" />
-            <p className="manifesto__line">
-              Predict power &nbsp;<em>→</em>&nbsp; optimize its use &nbsp;<em>→</em>&nbsp;
-              understand future needs &nbsp;<em>→</em>&nbsp; invest efficiently.
-            </p>
-            <span className="manifesto__rule" />
-          </div>
+          <Reveal>
+            <div className="principle">
+              <header className="principle__head">
+                <span className="eyebrow">The core principle</span>
+                <p className="principle__intro">
+                  One connected chain, not four separate tools. The 24–72 hour
+                  forecast is the intelligence layer every other decision consumes.
+                </p>
+              </header>
+              <ol className="principle__chain">
+                {PRINCIPLE.map((s, i) => (
+                  <li key={s.n} className="principle__step">
+                    <span className="principle__idx">{s.n}</span>
+                    <h3 className="principle__title">{s.t}</h3>
+                    <p className="principle__body">{s.d}</p>
+                    {i < PRINCIPLE.length - 1 && (
+                      <span className="principle__arrow" aria-hidden="true">
+                        →
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -216,21 +311,31 @@ export default function Landing() {
             </div>
           </Reveal>
           <Reveal>
-            <div className="steps">
-              {[
-                ["What will we generate?", "Forecast solar and wind output for the next 24–72 hours with honest uncertainty."],
-                ["What should we do with that power?", "Surplus or shortage — charge storage, hold backup, or curtail only when necessary."],
-                ["What risks should we prepare for?", "Recurring seasonal patterns, equipment failure risk, low-generation windows."],
-                ["Where should we invest next?", "Future demand, generation potential, economics and storage constraints converge on a recommendation."],
-              ].map(([q, a]) => (
-                <div key={q} className="step">
-                  <span className="n">0{q ? "" : ""}</span>
-                  <div>
-                    <h3>{q}</h3>
-                    <p>{a}</p>
+            <div className="qa">
+              {QUESTIONS.map((item, i) => {
+                const open = openQ === i;
+                return (
+                  <div key={item.q} className={open ? "qa__item qa__item--open" : "qa__item"}>
+                    <button
+                      type="button"
+                      className="qa__head"
+                      aria-expanded={open}
+                      onClick={() => setOpenQ(open ? -1 : i)}
+                    >
+                      <span className="qa__n">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="qa__q">{item.q}</span>
+                      <span className="qa__plus" aria-hidden="true">
+                        +
+                      </span>
+                    </button>
+                    <div className="qa__body">
+                      <div className="qa__inner">
+                        <p>{item.a}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Reveal>
         </div>
@@ -251,94 +356,15 @@ export default function Landing() {
             </div>
           </Reveal>
           <Reveal>
-            <div className="grid grid--3">
-              {MODULES.map((m) => (
-                <div key={m.id} className="card">
+            <div className="grid grid--3 modules">
+              {MODULES.map((m, i) => (
+                <div
+                  key={m.id}
+                  className={i === MODULES.length - 1 ? "card card--wide" : "card"}
+                >
                   <span className="idx">{m.id}</span>
                   <h3>{m.name}</h3>
                   <p>{m.d}</p>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ============ APPROACH / PRINCIPLE ============ */}
-      <section className="section" id="approach">
-        <div className="wrap">
-          <div className="feature-row">
-            <div className="feature-row__text">
-              <Reveal>
-                <span className="eyebrow">Uncertainty, not guarantees</span>
-                <h2 className="h2">The forecast is never a single number.</h2>
-                <p className="lead">
-                  A single MW value hides the only thing that determines action. The
-                  model returns three quantiles — p10, p50, p90 — so a decision-maker
-                  sees both the median and how wide the outcome could be.
-                </p>
-                <ul className="ticklist" style={{ marginTop: "1rem" }}>
-                  <li><strong>p10 — pessimistic:</strong> truth above this 90% of the time. Shortage risk, backup scheduling.</li>
-                  <li><strong>p50 — median:</strong> the forecast. Expected generation.</li>
-                  <li><strong>p90 — optimistic:</strong> truth below this 90% of the time. Surplus risk, storage sizing.</li>
-                </ul>
-              </Reveal>
-            </div>
-            <div className="feature-row__media">
-              <Reveal>
-                <div className="code-card" style={{ boxShadow: "var(--shadow-md)" }}>
-                  <div className="code-card__bar">
-                    <span className="code-card__file">POST /forecast · response</span>
-                  </div>
-                  <div className="code-card__body">
-                    <pre>{`{
-  "site_id": "GJ-SOLAR-CHARANKA",
-  "tech": "solar",
-  "issue_time_utc": "2026-09-12T00:00:00Z",
-  "capacity_mw": 50.0,
-  "model_version": "xgb-q-0.1.0",
-  "weather_source": "openmeteo:icon_seamless",
-  "location_is_estimated": false,
-  "points": [
-    { "valid_time_utc": "2026-09-12T01:00:00Z",
-      "horizon_h": 1,
-      "p10_mw": 7.17, "p50_mw": 18.56,
-      "p90_mw": 27.71,
-      "clearsky_mw": 44.64,
-      "physics_mw": 25.67 }
-  ]
-}`}</pre>
-                  </div>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ END-TO-END SCENARIO ============ */}
-      <section className="section" id="scenario">
-        <div className="wrap">
-          <Reveal className="shead">
-            <div className="left">
-              <span className="eyebrow">End-to-end scenario</span>
-              <h2 className="h2">A ₹500 crore budget, one connected decision.</h2>
-              <p className="lead">
-                A region with solar and wind, limited storage, rising industrial
-                demand, and a future investment budget — the platform walks the whole
-                question from a 72-hour forecast to a long-term allocation.
-              </p>
-            </div>
-          </Reveal>
-          <Reveal>
-            <div className="steps">
-              {SCENARIO.map((s) => (
-                <div key={s.n} className="step">
-                  <span className="n">{s.n}</span>
-                  <div>
-                    <h3>{s.t}</h3>
-                    <p>{s.d}</p>
-                  </div>
                 </div>
               ))}
             </div>
@@ -356,37 +382,23 @@ export default function Landing() {
             </div>
           </Reveal>
           <Reveal>
-            <div className="steps">
-              {PHASES.map((p) => (
-                <div key={p.tag} className="step">
-                  <span className="n">{p.tag.split("·")[1]?.trim() ?? p.tag}</span>
-                  <div>
-                    <h3 style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
-                      {p.on && <span className="pill pill--ok">live</span>} {p.tag}
-                    </h3>
-                    <p>{p.l}</p>
-                  </div>
-                </div>
+            <div className="runway">
+              <div className="runway__scope runway__scope--now">
+                <span className="runway__dot runway__dot--now" />
+                Current scope
+              </div>
+              {PHASES.filter((p) => p.scope === "now").map((p) => (
+                <PhaseBlock key={p.phase} p={p} />
               ))}
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ============ TECH STACK ============ */}
-      <section className="section" id="stack">
-        <div className="wrap">
-          <Reveal className="shead">
-            <div className="left">
-              <span className="eyebrow">Technology stack</span>
-              <h2 className="h2">Built to grow from one plant to state-level planning.</h2>
-            </div>
-          </Reveal>
-          <Reveal>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: ".6rem" }}>
-              {STACK.map((t) => (
-                <span key={t} className="chip">{t}</span>
+              <div className="runway__scope runway__scope--next">
+                <span className="runway__dot" />
+                Future scope
+              </div>
+              {PHASES.filter((p) => p.scope === "next").map((p) => (
+                <PhaseBlock key={p.phase} p={p} />
               ))}
+              <span className="runway__rule runway__rule--a" aria-hidden="true" />
+              <span className="runway__rule runway__rule--b" aria-hidden="true" />
             </div>
           </Reveal>
         </div>

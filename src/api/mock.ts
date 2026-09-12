@@ -66,7 +66,6 @@ interface SolarProfile {
   kind: "solar";
   clearSkyFactor: number;
   hour12: number;
-  night0: number;
   morning: number;
 }
 interface WindProfile {
@@ -78,9 +77,8 @@ function solarProfile(rng: () => number): SolarProfile {
   const clearSkyFactor = 0.78 + rng() * 0.18;
   const world = pick([0.34, 0.4, 0.46, 0.3], rng);
   const hour12 = Math.floor(world * 24);
-  const night0 = rng();
   const morning = 0.82 + rng() * 0.3;
-  return { kind: "solar", clearSkyFactor, hour12, night0, morning };
+  return { kind: "solar", clearSkyFactor, hour12, morning };
 }
 
 function windProfile(rng: () => number): WindProfile {
@@ -117,7 +115,7 @@ function runForecast(
     if (tech === "solar" && hourly.kind === "solar") {
       const diff = Math.abs(hourOfDay - hourly.hour12);
       const dayFrac = diff > 12 ? 24 - diff : diff;
-      if (dayFrac >= 11.5 || hourly.night0 < 0.18) {
+      if (dayFrac >= 11.5) {
         clearsky = 0;
         physics = 0;
         p50 = 0;
