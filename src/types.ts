@@ -1,15 +1,3 @@
-/** Configuration — swap to the live backend with one flag. */
-export const config = {
-  /** When true, use the deterministic mock generator. When false, hit the real FastAPI backend. */
-  USE_MOCK: true,
-  /** Base URL for the live backend (used when USE_MOCK is false). */
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000",
-  /** Forecast horizon slider bounds (matches the ML contract: int 1–72). */
-  HORIZON_MIN: 1,
-  HORIZON_MAX: 72,
-  HORIZON_DEFAULT: 72,
-};
-
 export type Tech = "solar" | "wind";
 
 /** POST /forecast — Option A: a registered site. */
