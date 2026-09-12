@@ -58,9 +58,12 @@ def _canonical(kind: str, tech: str) -> pd.DataFrame | None:
     while the models train on AEMO would leave the skew test passing against data nothing
     in production touches - which is precisely the failure T1 exists to catch.
     """
+    from reip.models.train import CORPUS_PREFERENCE, power_corpus
+
     canonical = get_settings().data_canonical
-    for corpus in ("aemo", "gefcom"):
-        path = canonical / f"{corpus}_{tech}_{kind}.parquet"
+    for corpus in CORPUS_PREFERENCE:
+        name = power_corpus(corpus) if kind == "power" else corpus
+        path = canonical / f"{name}_{tech}_{kind}.parquet"
         if path.exists():
             return pd.read_parquet(path)
     return None

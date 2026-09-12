@@ -6,7 +6,7 @@ module multiplies it by the same reference the target was divided by during trai
 discrepancy between those two quantities becomes a systematic bias in every forecast
 served, with nothing raising an error.
 
-Three guards are applied after denormalisation, in order:
+Four guards are applied, in this order:
 
 1. **Feature-order assertion.** The ordered feature list is stored in the artifact metadata
    and checked here. Trees index features positionally, so a reordered column would score
@@ -14,8 +14,11 @@ Three guards are applied after denormalisation, in order:
 2. **Quantile sorting.** The three quantile models are fitted independently and nothing
    couples them, so p10 can cross above p50 in sparse regions. Sorting each row restores
    monotonicity.
-3. **Physical clamping.** Output is bounded to [0, capacity], and forced to exactly zero
-   for solar when the clear-sky reference says the sun is down.
+3. **Conformal widening.** The calibrated correction from `models/splits.py`, applied per
+   lead bucket while the numbers are still dimensionless. Without it the served interval is
+   the raw one, which on wind covered 70.5% against a nominal 80%.
+4. **Physical clamping.** Output is bounded to [0, capacity], capped at the clear-sky
+   ceiling, and forced to exactly zero for solar when the sun is down.
 """
 
 from __future__ import annotations
@@ -31,6 +34,7 @@ import pandas as pd
 
 from reip.config import get_settings
 from reip.features.build import NIGHT_CLEARSKY_FLOOR_MW, build_features
+from reip.models.splits import apply_conformal, widening_for
 from reip.physics.clearsky import PvlibClearSky
 from reip.physics.solar import solar_physics_frame
 from reip.physics.wind import wind_physics_frame
@@ -176,6 +180,26 @@ def predict_frame(
     # Independently-fitted quantiles can cross; sorting each row restores monotonicity
     # without distorting the median.
     raw = np.sort(raw, axis=1)
+
+    # Conformal widening. This was fitted at training time on held-out sites and stored in
+    # the artifact, but until now was never read back - so the API served the *raw* interval
+    # while the metadata reported the calibrated one. On wind that was a 70.5% interval
+    # labelled 80%, which is exactly the overconfidence CQR exists to remove, and every
+    # consumer reading p10 as a firm-generation floor inherited it.
+    #
+    # Applied here, in target units, because that is what the widening was measured in:
+    # after this point the numbers become megawatts and the correction would no longer be
+    # dimensionally meaningful. The physical clamps below still bound the widened band.
+    horizons = weather.sort_values("valid_time_utc")["horizon_h"].to_numpy(dtype="int32")
+    widening = widening_for(model.metadata.get("conformal_widening", 0.0), horizons)
+    lower, upper = apply_conformal(raw[:, 0], raw[:, 2], widening)
+
+    # CQR adjusts only the interval endpoints; the median is not conformalised and must
+    # stay bracketed by them. That is not automatic when the widening is negative - solar's
+    # is - because a tightening interval can close past the median from either side, which
+    # `apply_conformal` cannot detect since it never sees p50.
+    raw[:, 0] = np.minimum(lower, raw[:, 1])
+    raw[:, 2] = np.maximum(upper, raw[:, 1])
 
     power = raw * denominator.to_numpy(dtype="float64")[:, None]
     power = np.clip(power, 0.0, site.capacity_mw)

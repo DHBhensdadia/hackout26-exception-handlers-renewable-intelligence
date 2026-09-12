@@ -191,10 +191,85 @@ def conformal_widening(
     return float(np.quantile(scores, level, method="higher"))
 
 
+# Below this many calibration rows a bucket's own quantile is noise, and a noisy widening
+# is worse than a pooled one: it would hand a lead bucket an interval calibrated on an
+# accident. Such buckets inherit the pooled value instead.
+MIN_BUCKET_SAMPLES: int = 500
+
+
+def conformal_widening_by_bucket(
+    y_true: np.ndarray,
+    lower: np.ndarray,
+    upper: np.ndarray,
+    horizon_h: np.ndarray,
+    *,
+    coverage: float = TARGET_COVERAGE,
+) -> dict[str, float]:
+    """One widening per lead bucket, plus a pooled fallback under `"all"`.
+
+    A single scalar across 1-72 h is the wrong shape for this correction. Forecast error
+    grows with lead time - a 72 h NWP carries roughly twice the error of a 24 h one - so a
+    pooled widening is simultaneously too generous at short leads and too mean at long
+    ones. Since it is fitted to hit 80% *on average*, it lands near 80% overall while
+    over-covering the near term and under-covering exactly where uncertainty is largest.
+
+    That matters beyond tidiness: everything downstream reads band width as a measure of
+    how much reserve to hold, so a band that does not grow with horizon understates risk
+    precisely at the horizons where risk is greatest.
+
+    The `"all"` entry is always present. It is what a bucket with too little data falls back
+    to, and what a caller uses when a horizon lands outside the defined buckets.
+    """
+    from reip.schemas import lead_bucket
+
+    widenings = {"all": conformal_widening(y_true, lower, upper, coverage=coverage)}
+
+    buckets = np.array([lead_bucket(int(h)) for h in horizon_h])
+    for label in np.unique(buckets):
+        if label == "out-of-range":
+            continue
+        mask = buckets == label
+        n = int(mask.sum())
+        if n < MIN_BUCKET_SAMPLES:
+            log.info("bucket %s has only %d calibration rows; using pooled widening", label, n)
+            continue
+        widenings[str(label)] = conformal_widening(
+            y_true[mask], lower[mask], upper[mask], coverage=coverage
+        )
+    return widenings
+
+
+def widening_for(widenings: dict[str, float] | float, horizon_h: np.ndarray) -> np.ndarray:
+    """Per-row widening, looked up by each row's lead bucket.
+
+    Accepts a bare float so artifacts trained before calibration became bucket-aware keep
+    loading and keep predicting - they simply apply one value everywhere, which is what
+    they were calibrated to do.
+    """
+    from reip.schemas import lead_bucket
+
+    if not isinstance(widenings, dict):
+        return np.full(len(horizon_h), float(widenings), dtype="float64")
+
+    fallback = float(widenings.get("all", 0.0))
+    return np.array(
+        [float(widenings.get(lead_bucket(int(h)), fallback)) for h in horizon_h],
+        dtype="float64",
+    )
+
+
 def apply_conformal(
-    lower: np.ndarray, upper: np.ndarray, widening: float, *, floor: float = 0.0
+    lower: np.ndarray,
+    upper: np.ndarray,
+    widening: float | np.ndarray,
+    *,
+    floor: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Widen (or tighten) a predicted interval by the calibrated amount."""
+    """Widen (or tighten) a predicted interval by the calibrated amount.
+
+    `widening` may be a scalar or one value per row, so a bucket-aware correction applies
+    through the same path as a pooled one.
+    """
     adjusted_lower = np.maximum(lower - widening, floor)
     adjusted_upper = np.maximum(upper + widening, adjusted_lower)
     return adjusted_lower, adjusted_upper
