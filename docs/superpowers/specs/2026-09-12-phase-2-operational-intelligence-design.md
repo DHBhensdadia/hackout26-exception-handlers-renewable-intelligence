@@ -141,12 +141,34 @@ Probed with `HEAD` through the existing `aemo.table_urls()` path; all returned 2
 
 | Table | Content | Size/month | Role |
 |---|---|---|---|
-| `DISPATCHREGIONSUM` | Regional demand, 5-min, per NEM region | 5.8 MB | Demand target |
+| `DISPATCHREGIONSUM` | Regional demand, 5-min, per NEM region | 5.8 MB | Demand target, and more — below |
 | `DISPATCHPRICE` | Regional spot price (RRP), 5-min | 2.0 MB | Dispatch objective in real $ |
 | `ROOFTOP_PV_ACTUAL` | Behind-the-meter rooftop PV estimate, 30-min | 0.2 MB | Demand feature |
 | `TRADINGPRICE` | 30-min settlement price | 0.7 MB | Cross-check on `DISPATCHPRICE` |
 
 ~280 MB for 36 months, matching the existing generation window (2023-09 → 2026-08).
+**Ingested: 131,520 rows, 26,304 hours × 5 regions, no gaps.**
+
+`DISPATCHREGIONSUM` proved to carry considerably more than demand, and three of its fields replace
+quantities this design had planned to assume:
+
+| Field | Replaces |
+|---|---|
+| `AVAILABLEGENERATION` | The configured dispatchable-headroom constant in §6.4 — now measured |
+| `SS_*_UIGF` vs `SS_*_CLEAREDMW` | **Measured curtailment.** What the intermittent fleet could produce against what it was allowed to. Ground truth for the quantity §6.4 predicts, rather than a modelled proxy |
+| `DEMANDFORECAST` | AEMO's own demand forecast — a second, much stronger baseline than seasonal-naive |
+| `BDU_INITIAL_ENERGY_STORAGE` | Aggregate regional battery state of charge (from mid-2025 only) |
+
+Two silent traps, both handled in `ingest/aemo_market.py`: dispatch tables carry intervention runs
+that duplicate an interval, and `ROOFTOP_PV_ACTUAL` publishes both `MEASUREMENT` and `SATELLITE`
+estimates for the same half hour.
+
+**Negative demand is real and must not be filtered.** 257 hours over three years have operational
+demand below zero, all in SA1. The extreme is Christmas Day 2025 at 13:30 local: a public holiday
+with minimal industrial load, 1,780 MW of rooftop PV, demand at −280 MW and spot price at
+−$251/MWh. Rooftop solar alone exceeded the entire state's consumption. This is the condition the
+platform exists to anticipate, so validation permits it and guards the rate instead — a sign error
+would make negative demand common rather than 0.2% of hours.
 
 `ROOFTOP_PV_ACTUAL` was not in the original plan and is a material find. Operational demand is
 *net* of rooftop PV, so on a sunny mild day it collapses in a way no calendar or temperature feature
@@ -213,22 +235,39 @@ This blocks Phase 2 rather than merely embarrassing Phase 1: the balance and dis
 band *width* directly, so a band that does not grow with lead time produces reserve numbers that are
 too small exactly where uncertainty is largest.
 
-**The fix.** Fetch lead-day 2 and 3 from Open-Meteo Previous Runs. Single-lead over 3 years cost
-9,777 calls; ~6,844 remain. Full history at both extra leads is therefore not affordable.
+**The fix.** Refetch from Open-Meteo Previous Runs at leads 1, 2 and 3 together, replacing the
+single-lead corpus rather than patching extra leads onto it.
 
-**Choice: all 151 corpus sites over a reduced window**, rather than 3 years across a subset. Site
-diversity is what drives cold-start generalisation — the property the whole design rests on — while
-lead-time skill decay is a smooth function that does not need three years to estimate.
+*This paragraph supersedes an earlier version of this section, which framed 6,844 as "remaining
+quota" and proposed 11 months at leads 2–3 only. Checked against `weather_bulk.estimate_calls` —
+which reproduces the existing corpus cost of 9,699 exactly — the real figures are:*
 
-Quota arithmetic fixes the window. The lead-1 extraction cost 9,777 calls for 151 sites over 3
-years — 21.6 calls per site-year. Two extra leads across 151 sites is 302 site-leads, so the
-affordable window is `6,844 / (302 × 21.6) ≈ 1.05 years`. Spending the whole quota leaves nothing
-for retries, so **target 11 months at leads 2 and 3, full site coverage** — about 5,980 calls, a
-~13% margin. Choose the 11 months to span a full seasonal cycle rather than the most recent
-contiguous block, so the lead effect is not estimated on one season alone.
+| Window, all 3 leads | Calls | Quota days @ 10k |
+|---|---:|---:|
+| 12 months | 6,789 | 0.68 |
+| 16 months | 9,058 | 0.91 |
+| 3 years | 20,367 | 2.04 |
 
-This leaves the training set lead-imbalanced (3 years at lead 1, 1 year at leads 2–3). Acceptable
-for trees; recorded in metadata and stated in the report.
+Full 3-year multi-lead is affordable but spans ~2 quota days, which was ruled out on schedule.
+**16 months at all three leads, all 151 corpus sites — 9,058 calls, one quota day.** That is
+*more* data than the corpus it replaces (2.53 M solar rows against 1.89 M, 1.34×), from a single
+clean source, with genuine lead resolution and a full seasonal cycle.
+
+Site diversity over history length is the deliberate trade: diversity drives cold-start
+generalisation, the property the whole design rests on, while lead-time skill decay is a smooth
+function that does not need three years to estimate.
+
+**There is no bulk-download bypass**, and this was checked rather than assumed — the Open-Meteo S3
+open-data bucket was probed directly on 2026-09-12:
+
+- `data_spatial/dwd_icon/` holds per-run files, the only lead-resolved source, and covers **8 days**
+  (2026-09-05 to 09-12). A rolling window, not an archive.
+- `data/dwd_icon/<var>/` holds ~3.35 years (116 chunks × 253 h) but is a best-available time series
+  with **no lead dimension** — the same kind of data as the old corpus, merely unmetered.
+
+So the API is the only source of genuine 24/48/72 h separation, and it is quota-bound. Recorded here
+so the S3 route is not re-investigated for this purpose later; `ingest/weather_s3.py` remains useful
+only for unmetered single-lead bulk history.
 
 **Consequential change: CQR calibration becomes per-lead-bucket.** A single scalar widening across
 1–72 h defeats the purpose. `splits.py::conformal_widening` returns a vector indexed by lead bucket
@@ -244,8 +283,22 @@ not regress by more than 0.3 pp against the current 8.30% / 12.38%.
 Quantile XGBoost on regional operational demand, normalised by regional peak. Same architecture as
 generation: three quantiles, CQR-calibrated per lead bucket, time-blocked split.
 
-**Features:** calendar (hour, day-of-week, holidays) · temperature with HDD/CDD · humidity ·
-`ROOFTOP_PV_ACTUAL` · load lags at `t₀`, `t₀ − 24 h`, `t₀ − 168 h`.
+**Features:** calendar (hour, day-of-week, national holidays) · temperature with HDD/CDD and a
+24 h accumulated-heat term · GHI, cloud and wind at the load centre · load lags at `t₀`,
+`t₀ − 24 h`, `t₀ − 168 h` with rolling level and volatility · rooftop PV *lagged 24 h*.
+
+**Correction to an earlier draft: measured `ROOFTOP_PV_ACTUAL` is not a feature.** The reasoning
+for wanting it was right — operational demand is net of rooftop output — and that is exactly what
+disqualifies the *measured* value: it is an actual, and nobody has it when the forecast is issued
+two days ahead. Including it would post an excellent validation score for a model that cannot be
+served. What is legitimate is everything rooftop output is made of — the GHI and cloud forecast at
+the valid time, which an NWP genuinely provides — plus rooftop's own level as of the issue time.
+Those carry the midday-trough signal without borrowing the answer. T10 asserts it stays out.
+
+**Weather at load centres, not generation sites.** Demand follows the weather where people are; the
+fleet sits hundreds of kilometres away. Five city cells (Sydney, Brisbane, Adelaide, Hobart,
+Melbourne), fetched as archived *forecasts* rather than ERA5 reanalysis — a model trained on truth
+and served on forecasts degrades silently.
 
 **The load-lag departure.** Phase 1 deliberately banned power lags because a generation forecast at
 `t₀ + 48 h` cannot see generation at `t₀ + 47 h`. Demand is different: load *at or before*
@@ -279,11 +332,19 @@ Per hour, per scenario:
 ```
 residual_load = demand − renewable_generation
 surplus       when residual_load < 0
-shortage      when residual_load > available_dispatchable
+shortage      when residual_load > available_generation
 ```
 
 Aggregated across scenarios into: probability of surplus, probability of shortage, expected
 magnitude (MW), expected energy (MWh), expected run duration (h).
+
+`available_generation` was to have been a configured constant, since no dispatchable-fleet data was
+expected. `DISPATCHREGIONSUM.AVAILABLEGENERATION` supplies it as a measurement instead (§5.1), so
+the shortage threshold is observed rather than assumed.
+
+The same table also yields **measured curtailment**, which turns §6.4 from an unfalsifiable
+construct into something scoreable: the surplus logic predicts curtailment, and `SS_*_UIGF` minus
+`SS_*_CLEAREDMW` says what actually happened.
 
 **Verification:** Brier score on the surplus and shortage events, plus a reliability diagram — so
 that "70% chance of surplus" is a statement that held 70% of the time. A probability that is not
