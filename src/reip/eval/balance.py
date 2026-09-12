@@ -60,8 +60,13 @@ def _reliability(probabilities: np.ndarray, outcomes: np.ndarray, bins: int) -> 
     return rows
 
 
-def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_half: bool) -> dict:
-    """Score surplus and shortage probabilities for one region against outcomes."""
+def prepare_region(region: str) -> dict:
+    """Everything a window-by-window evaluation of one region needs, loaded once.
+
+    Shared with `eval/vss.py` rather than duplicated: the two must agree on which sites,
+    which lead and which hours they are using, or their results describe different systems
+    while appearing to describe one.
+    """
     from reip.eval.report import build_holdout_frame
 
     registry = SiteRegistry.load()
@@ -70,11 +75,7 @@ def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_ha
         raise ValueError(f"no demand model for {region}")
 
     demand_frame = holdout_predictions(region).set_index("valid_time_utc").sort_index()
-    demand_store = residual_store.load_demand()
-    headroom = balance.dispatchable_headroom(region)
-    peak = demand_model.peak_mw(region)
 
-    # Per-technology holdout predictions and the residual stores behind them.
     tech_data = {}
     for tech in Tech:
         sites_in_region = {s.site_id for s in registry.by_region(region, tech)}
@@ -84,6 +85,8 @@ def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_ha
         block = holdout[holdout["site_id"].isin(sites_in_region)]
         if block.empty:
             continue
+        # One lead only: mixing vintages of the same hour into one regional total is not
+        # something anyone would ever dispatch against.
         lead = int(block["horizon_h"].value_counts().idxmax())
         block = block[block["horizon_h"] == lead]
         store = residual_store.load(tech)
@@ -105,7 +108,6 @@ def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_ha
     if not tech_data:
         raise ValueError(f"{region}: no technology has enough sites to balance")
 
-    # Hours where every input is present.
     common = None
     for data in tech_data.values():
         ok = (
@@ -115,7 +117,28 @@ def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_ha
         times = data["pivots"]["p50"].index[ok]
         common = times if common is None else common.intersection(times)
     common = common.intersection(demand_frame.index)
+
+    return {
+        "tech_data": tech_data,
+        "demand_frame": demand_frame,
+        "demand_store": residual_store.load_demand(),
+        "headroom": balance.dispatchable_headroom(region),
+        "peak": demand_model.peak_mw(region),
+        "common": common,
+    }
+
+
+def _score(region: str, *, n_windows: int, seed: int, calibrate: bool, scored_half: bool) -> dict:
+    """Score surplus and shortage probabilities for one region against outcomes."""
+    prepared = prepare_region(region)
+    tech_data = prepared["tech_data"]
+    demand_frame = prepared["demand_frame"]
+    demand_store = prepared["demand_store"]
+    headroom = prepared["headroom"]
+    peak = prepared["peak"]
+
     # The earlier stretch fits the reliability map; the later one scores it.
+    common = prepared["common"]
     cut = int(len(common) * CALIB_FRACTION)
     common = common[cut:] if scored_half else common[:cut]
     if len(common) < WINDOW_H * 2:

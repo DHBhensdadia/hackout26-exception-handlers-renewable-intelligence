@@ -1,0 +1,352 @@
+[
+  {
+    "region": "SA1",
+    "n_windows": 12,
+    "n_scenarios": 60,
+    "hours_evaluated": 864,
+    "asset": {
+      "energy_mwh": 200.0,
+      "power_mw": 100.0,
+      "duration_h": 2.0,
+      "efficiency": 0.88
+    },
+    "grid": {
+      "import_limit_mw": 730.0,
+      "export_limit_mw": 634.6,
+      "source": "measured from NETINTERCHANGE"
+    },
+    "dispatchable_headroom_mw": 1610.3,
+    "cost_aud_per_window": {
+      "wait_and_see": 7793995.03,
+      "stochastic": 7794324.51,
+      "expected_value": 7795725.23
+    },
+    "vss_aud_total": 16808.7,
+    "evpi_aud_total": 3953.72,
+    "vss_aud_per_year": 170422.0,
+    "evpi_aud_per_year": 40086.0,
+    "windows_with_positive_vss": 1,
+    "decision_differed_in_hour_1": 1,
+    "windows": [
+      {
+        "wait_and_see_aud": 4017332.21,
+        "stochastic_aud": 4017332.21,
+        "expected_value_solution_aud": 4017332.21,
+        "vss_aud": -0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-06-05T18:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 2513979.47,
+        "stochastic_aud": 2513979.47,
+        "expected_value_solution_aud": 2513979.47,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-25T11:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 3309923.05,
+        "stochastic_aud": 3309923.05,
+        "expected_value_solution_aud": 3309923.05,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-06-06T09:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 4295130.08,
+        "stochastic_aud": 4295130.08,
+        "expected_value_solution_aud": 4295130.08,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-22T04:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 3511560.3,
+        "stochastic_aud": 3511560.3,
+        "expected_value_solution_aud": 3511560.3,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-26T18:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 49274341.05,
+        "stochastic_aud": 49274341.05,
+        "expected_value_solution_aud": 49274341.05,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-06-19T21:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 2083325.93,
+        "stochastic_aud": 2083325.93,
+        "expected_value_solution_aud": 2083325.93,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-08-14T17:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 591118.97,
+        "stochastic_aud": 591118.97,
+        "expected_value_solution_aud": 591118.97,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "discharge",
+        "from_utc": "2026-05-29T10:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 10924822.26,
+        "stochastic_aud": 10928691.33,
+        "expected_value_solution_aud": 10945500.03,
+        "vss_aud": 16808.7,
+        "evpi_aud": 3869.07,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-07-30T08:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 7781401.91,
+        "stochastic_aud": 7781401.91,
+        "expected_value_solution_aud": 7781401.91,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "discharge",
+        "from_utc": "2026-07-27T08:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 3797677.06,
+        "stochastic_aud": 3797677.06,
+        "expected_value_solution_aud": 3797677.06,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-04T19:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 1427328.08,
+        "stochastic_aud": 1427412.73,
+        "expected_value_solution_aud": 1427412.73,
+        "vss_aud": 0.0,
+        "evpi_aud": 84.65,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-06-07T04:00:00Z"
+      }
+    ]
+  },
+  {
+    "region": "NSW1",
+    "n_windows": 12,
+    "n_scenarios": 60,
+    "hours_evaluated": 864,
+    "asset": {
+      "energy_mwh": 200.0,
+      "power_mw": 100.0,
+      "duration_h": 2.0,
+      "efficiency": 0.88
+    },
+    "grid": {
+      "import_limit_mw": 1667.6,
+      "export_limit_mw": 945.5,
+      "source": "measured from NETINTERCHANGE"
+    },
+    "dispatchable_headroom_mw": 10014.7,
+    "cost_aud_per_window": {
+      "wait_and_see": 42450891.07,
+      "stochastic": 42450891.07,
+      "expected_value": 42450891.07
+    },
+    "vss_aud_total": 0.0,
+    "evpi_aud_total": 0.0,
+    "vss_aud_per_year": 0.0,
+    "evpi_aud_per_year": 0.0,
+    "windows_with_positive_vss": 0,
+    "decision_differed_in_hour_1": 0,
+    "windows": [
+      {
+        "wait_and_see_aud": 42017252.07,
+        "stochastic_aud": 42017252.07,
+        "expected_value_solution_aud": 42017252.07,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-06-05T18:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 49876572.22,
+        "stochastic_aud": 49876572.22,
+        "expected_value_solution_aud": 49876572.22,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-07-25T11:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 43844551.53,
+        "stochastic_aud": 43844551.53,
+        "expected_value_solution_aud": 43844551.53,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-06-06T09:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 32688018.15,
+        "stochastic_aud": 32688018.15,
+        "expected_value_solution_aud": 32688018.15,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-07-22T04:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 46044662.44,
+        "stochastic_aud": 46044662.44,
+        "expected_value_solution_aud": 46044662.44,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-26T18:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 50056181.77,
+        "stochastic_aud": 50056181.77,
+        "expected_value_solution_aud": 50056181.77,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "discharge",
+        "from_utc": "2026-06-19T21:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 32455121.41,
+        "stochastic_aud": 32455121.41,
+        "expected_value_solution_aud": 32455121.41,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-08-14T17:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 23641926.77,
+        "stochastic_aud": 23641926.77,
+        "expected_value_solution_aud": 23641926.77,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "discharge",
+        "from_utc": "2026-05-29T10:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 53699316.47,
+        "stochastic_aud": 53699316.47,
+        "expected_value_solution_aud": 53699316.47,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "idle",
+        "deterministic_committed_action": "idle",
+        "from_utc": "2026-07-30T08:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 46332252.29,
+        "stochastic_aud": 46332252.29,
+        "expected_value_solution_aud": 46332252.29,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "discharge",
+        "deterministic_committed_action": "discharge",
+        "from_utc": "2026-07-27T08:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 47411914.49,
+        "stochastic_aud": 47411914.49,
+        "expected_value_solution_aud": 47411914.49,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-07-04T19:00:00Z"
+      },
+      {
+        "wait_and_see_aud": 41342923.22,
+        "stochastic_aud": 41342923.22,
+        "expected_value_solution_aud": 41342923.22,
+        "vss_aud": 0.0,
+        "evpi_aud": 0.0,
+        "n_scenarios": 60,
+        "horizon_h": 72,
+        "committed_action": "charge",
+        "deterministic_committed_action": "charge",
+        "from_utc": "2026-06-07T04:00:00Z"
+      }
+    ]
+  }
+]
