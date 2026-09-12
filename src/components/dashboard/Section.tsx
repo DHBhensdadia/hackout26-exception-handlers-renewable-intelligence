@@ -10,21 +10,24 @@ export function Section({
   index,
   title,
   meta,
+  titleAs,
   children,
 }: {
   id: string;
   index: string;
   title: string;
   meta?: ReactNode;
+  titleAs?: "h1" | "h2";
   children: ReactNode;
 }) {
+  const Title = titleAs ?? "h2";
   return (
     <section className="dsection" id={id} aria-labelledby={`${id}-title`}>
       <header className="dsection__head">
         <span className="dsection__idx">§{index}</span>
-        <h2 className="dsection__title" id={`${id}-title`}>
+        <Title className="dsection__title" id={`${id}-title`}>
           {title}
-        </h2>
+        </Title>
         {meta && <span className="dsection__meta">{meta}</span>}
       </header>
       <DashedLine className="dsection__rule" />
