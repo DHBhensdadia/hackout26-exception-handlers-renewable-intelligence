@@ -173,3 +173,40 @@ def test_balance_probabilities_beat_climatology():
                 f"{entry['region']} {event}: Brier skill {skill:+.1%} does not beat "
                 "climatology, so the probabilities carry no information"
             )
+
+
+def test_expected_equals_probability_times_conditional():
+    """E[X] = P(event) x E[X | event], and it must survive recalibration.
+
+    The two were computed independently at first: the probability was recalibrated and the
+    expected energy was not, so an hour reported at 0% probability could still carry
+    non-zero expected MWh. Nothing in the suite noticed - it took an end-to-end sweep over
+    real outputs.
+    """
+    result = _compute(demand_mw=500.0, gen_mw=500.0, headroom=0.0, spread=200.0)
+    frame = result.frame
+    for kind in ("surplus", "shortage"):
+        np.testing.assert_allclose(
+            frame[f"expected_{kind}_mw"],
+            frame[f"p_{kind}"] * frame[f"conditional_{kind}_mw"],
+            atol=1e-9,
+            err_msg=f"{kind}: expected != probability x conditional",
+        )
+
+
+def test_zero_probability_implies_zero_expected_energy():
+    result = _compute(demand_mw=100.0, gen_mw=300.0, headroom=50.0)
+    impossible = result.frame["p_shortage"] == 0.0
+    assert impossible.any(), "test needs an hour where shortage cannot occur"
+    assert (result.frame.loc[impossible, "expected_shortage_mw"].abs() < 1e-12).all()
+
+
+def test_conditional_magnitude_exceeds_unconditional():
+    """The size if it happens is never smaller than the probability-weighted average."""
+    result = _compute(demand_mw=500.0, gen_mw=500.0, headroom=0.0, spread=200.0)
+    frame = result.frame
+    occurring = frame["p_surplus"] > 0
+    assert (
+        frame.loc[occurring, "conditional_surplus_mw"]
+        >= frame.loc[occurring, "expected_surplus_mw"] - 1e-9
+    ).all()

@@ -115,8 +115,16 @@ the cold-start path, and it is the main demonstration.
 The interval is conformally calibrated — measured coverage on plants held out of training
 entirely is 82.7% (solar) and 78.9% (wind) against a nominal 80%.
 
-**Band width grows with lead time**, which is real and should not be smoothed away. A
-72-hour forecast is genuinely less certain than a 24-hour one.
+**Band width is driven mainly by conditions, not by lead time.** This is worth knowing
+before you design around it. A settled overcast day forecasts tightly; a broken-cloud day
+does not, and the band can differ threefold between two hours at the same lead. Lead time
+does widen it — measured at +1.8% from the 1–24 h bucket to the 49–72 h bucket — but that
+effect is small next to the weather, so **on any single forecast you should not expect the
+band to grow smoothly left to right**, and a design that assumes a widening cone will look
+broken against real data.
+
+Treat width as information in its own right: a narrow band at hour 60 means a genuinely
+predictable period, not a bug.
 
 ---
 
@@ -174,18 +182,20 @@ probabilities. See [`fixtures/balance.json`](fixtures/balance.json).
       "valid_time_utc": "2026-08-10T18:00:00Z",
       "horizon_h": 1,
       "region": "SA1",
-      "demand_p50_mw": 1403.68,
+      "demand_p50_mw": 1404.85,
       "renewable_p10_mw": 578.51,
       "renewable_p50_mw": 1151.0,
       "renewable_p90_mw": 1555.65,
-      "residual_p10_mw": -168.13,
-      "residual_p50_mw": 233.42,
-      "residual_p90_mw": 787.47,
-      "p_surplus": 0.06,
+      "residual_p10_mw": -166.96,
+      "residual_p50_mw": 234.59,
+      "residual_p90_mw": 788.65,
+      "p_surplus": 0.0627,
       "p_shortage": 0.0,
-      "expected_surplus_mw": 38.74,
+      "expected_surplus_mw": 9.45,
       "expected_shortage_mw": 0.0,
-      "expected_surplus_mwh": 38.74,
+      "conditional_surplus_mw": 150.74,
+      "conditional_shortage_mw": 0.0,
+      "expected_surplus_mwh": 9.45,
       "expected_shortage_mwh": 0.0,
       "recommended_action": "normal"
     }
@@ -197,7 +207,7 @@ probabilities. See [`fixtures/balance.json`](fixtures/balance.json).
       "to_utc": "2026-08-11T06:00:00Z",
       "hours": 6,
       "peak_probability": 1.0,
-      "energy_mwh": 2071.9
+      "energy_mwh": 1977.1
     }
   ]
 }
@@ -216,6 +226,7 @@ interesting hours are the ones below zero.
 | `p_surplus` | Probability generation exceeds demand |
 | `p_shortage` | Probability the gap exceeds what dispatchable plant can cover |
 | `expected_surplus_mw` | **Unconditional** mean: probability-weighted, zero where it does not occur |
+| `conditional_surplus_mw` | How big the surplus is **if it happens**. This is the "how much" number |
 | `expected_*_mwh` | Same number — hourly resolution means MW averaged over an hour is MWh. Safe to sum across hours for a period total |
 | `dispatchable_headroom_mw` | Measured non-renewable capacity available. The shortage threshold |
 
@@ -224,7 +235,11 @@ interesting hours are the ones below zero.
 45 MW. That makes it additive into energy, and it is the right number to sum — but label it
 "expected", never "forecast surplus".
 
-To show the size of a surplus *if it happens*, use `−residual_p10_mw` instead.
+To show the size of a surplus *if it happens*, use `conditional_surplus_mw`. The two are
+related by `expected = probability × conditional`, and that identity holds in every
+payload — a 6.27% chance of a 151 MW surplus reports as 9.45 MWh expected. Probabilities
+carry four decimals for exactly this reason: rounded to two, the identity visibly fails
+on small probabilities even though it holds in the values behind them.
 
 `p_surplus` and `p_shortage` are **not complementary** and do not sum to 1. Most hours are
 neither.
@@ -341,7 +356,8 @@ Messages are written for developers and name the offending value. They are safe 
 
 - `/forecast`: every field of `SiteForecast` and `ForecastPoint`
 - `/regions`: the whole payload
-- `/balance`: `region`, `points[]` field names, units and semantics; `events[]`
+- `/balance`: `region`, `points[]` field names, units and semantics; `events[]`, including
+  the `expected = probability × conditional` identity
 - `recommended_action` values and their thresholds
 - Units throughout: MW, MWh, probabilities in `[0, 1]`, UTC ISO-8601 with `Z`
 

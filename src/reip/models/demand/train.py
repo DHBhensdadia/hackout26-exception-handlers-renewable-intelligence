@@ -59,6 +59,10 @@ VAL_FRACTION = 0.10
 # extreme half hour would shrink every other region-relative value around it.
 PEAK_QUANTILE = 0.999
 
+# Below this many calibration rows a region cannot be centred or widened on its own
+# evidence, and the correction would be fitted to noise.
+MIN_REGION_CALIB_ROWS: int = 500
+
 
 @dataclass
 class DemandDataset:
@@ -137,7 +141,36 @@ def assemble(regions: list[str] | None = None) -> DemandDataset:
 
 
 def time_splits(valid_time: pd.Series) -> dict[str, np.ndarray]:
-    """Four contiguous blocks in chronological order: train, val, calib, test."""
+    """Four contiguous blocks in chronological order: train, val, calib, test.
+
+    Contiguous, and calibration sits immediately before test. That ordering was tried both
+    ways and the measurement settled it.
+
+    The obvious objection to a contiguous calibration block is seasonal: it lands on
+    2025-10 to 2026-01, southern-hemisphere spring into summer, while test runs through to
+    August and therefore into winter. Victorian load is 24% higher in test than in calib.
+    Conformal prediction needs the two sets to be exchangeable, and two different seasons
+    of a strongly seasonal quantity plainly are not.
+
+    So calibration was re-cut as a stride-sampled set of whole days spread across every
+    season of the pre-test period. Coverage got *worse* - 80.6% to 71.9% overall, and VIC1
+    from 66.9% down to 55.9%.
+
+    The reason is that the bias being corrected is itself seasonal. Averaged over a full
+    year the median residual is near zero (VIC1's correction fell from +0.0115 to -0.0001),
+    so a seasonally balanced calibration set has nothing left to correct with, while the
+    test period still carries a specific season's bias.
+
+    For a non-stationary series the useful calibration data is the data *closest in time*
+    to what is being predicted, not the most representative sample of the past. Adjacency
+    beats balance here. That is the opposite of the site-disjoint reasoning in
+    `models/splits.py`, and the difference is that drift runs along the time axis and not
+    the spatial one.
+
+    It is a proxy, not a fix. VIC1 still covers 66.9% against a nominal 80%, and the
+    residual gap is seasonal bias no scalar correction can reach. Recorded in the report as
+    a known limitation rather than tuned away.
+    """
     times = pd.DatetimeIndex(valid_time)
     span = times.max() - times.min()
     test_from = times.max() - span * TEST_FRACTION
@@ -204,12 +237,63 @@ def train(regions: list[str] | None = None, *, out_dir: Path | None = None) -> d
     h_calib = data.horizon_h.to_numpy()[split["calib"]]
     lo_cal, hi_cal = bounds("calib")
     y_calib = data.y[split["calib"]].to_numpy()
-    widening = conformal_widening_by_bucket(y_calib, lo_cal, hi_cal, h_calib, coverage=TARGET_COVERAGE)
+    region_calib = data.region.to_numpy()[split["calib"]]
 
     h_test = data.horizon_h.to_numpy()[split["test"]]
     lo_test, hi_test = bounds("test")
     y_test = data.y[split["test"]].to_numpy()
-    cal_test = apply_conformal(lo_test, hi_test, widening_for(widening, h_test))
+    region_test = data.region.to_numpy()[split["test"]]
+
+    # --- calibration is PER REGION, not pooled -------------------------------------
+    #
+    # A pooled correction landed on target overall and was wrong nearly everywhere:
+    # measured per region, coverage came out at 93% for QLD1 and 69% for VIC1 and TAS1
+    # against a nominal 80%. Pooling averages a too-wide region against a too-narrow one
+    # and reports the mean as success.
+    #
+    # Regional load curves are not exchangeable - Tasmania is hydro-backed and industrially
+    # dominated, Victoria is not - so the exchangeability that conformal prediction needs
+    # simply does not hold across them. It holds *within* a region, which is where the
+    # correction belongs.
+    #
+    # A location shift comes first. Pooling also left per-region bias in place: -3.3% of
+    # peak for TAS1, +3.7% for VIC1. Conformal widening can only inflate an interval around
+    # a centre it is given, so a displaced centre costs coverage on both sides at once.
+    # Centring per region before widening fixes the cause rather than padding around it.
+    bias: dict[str, float] = {}
+    widening: dict[str, dict[str, float]] = {}
+    for region in sorted(set(region_calib)):
+        mask = region_calib == region
+        if mask.sum() < MIN_REGION_CALIB_ROWS:
+            log.warning("%s: only %d calibration rows; left uncentred", region, int(mask.sum()))
+            bias[region], widening[region] = 0.0, {"all": 0.0}
+            continue
+        shift = float(np.median(y_calib[mask] - ((lo_cal[mask] + hi_cal[mask]) / 2.0)))
+        bias[region] = shift
+        widening[region] = conformal_widening_by_bucket(
+            y_calib[mask],
+            lo_cal[mask] + shift,
+            hi_cal[mask] + shift,
+            h_calib[mask],
+            coverage=TARGET_COVERAGE,
+        )
+
+    def calibrated(lower, upper, horizons, regions):
+        """Apply the per-region shift, then that region's per-bucket widening."""
+        shift = np.array([bias.get(r, 0.0) for r in regions])
+        widths = np.concatenate(
+            [
+                widening_for(widening.get(r, {"all": 0.0}), horizons[regions == r])
+                for r in sorted(set(regions))
+            ]
+        )
+        order = np.concatenate([np.flatnonzero(regions == r) for r in sorted(set(regions))])
+        per_row = np.empty(len(horizons))
+        per_row[order] = widths
+        return apply_conformal(lower + shift, upper + shift, per_row, floor=-np.inf)
+
+    cal_test = calibrated(lo_test, hi_test, h_test, region_test)
+    cal_calib = calibrated(lo_cal, hi_cal, h_calib, region_calib)
 
     # --- scoring, in MW so the numbers mean something --------------------------------
     peak_test = data.peak_mw[split["test"]].to_numpy()
@@ -243,6 +327,13 @@ def train(regions: list[str] | None = None, *, out_dir: Path | None = None) -> d
         by_region[region] = {
             "model_nmae_pct": round(nmae(model_mw, mask), 3),
             "seasonal_naive_nmae_pct": round(nmae(naive_mw, mask), 3),
+            "coverage_raw": round(
+                empirical_coverage(y_test[mask], lo_test[mask], hi_test[mask]), 4
+            ),
+            "coverage_calibrated": round(
+                empirical_coverage(y_test[mask], cal_test[0][mask], cal_test[1][mask]), 4
+            ),
+            "bias_correction": round(bias.get(region, 0.0), 6),
         }
 
     metadata = {
@@ -257,13 +348,17 @@ def train(regions: list[str] | None = None, *, out_dir: Path | None = None) -> d
         "split": {k: int(v.sum()) for k, v in split.items()},
         "training_window": [str(data.valid_time.min()), str(data.valid_time.max())],
         "peak_mw": {r: float(data.peak_mw[data.region == r].iloc[0]) for r in sorted(set(data.region))},
+        # Per region, each a per-lead-bucket mapping. `bias` is the location shift applied
+        # before widening; both are needed to reproduce a served interval.
         "conformal_widening": widening,
+        "bias_correction": bias,
         "best_rounds": best_rounds,
         "test": {
             "model_nmae_pct": round(nmae(model_mw), 3),
             "seasonal_naive_nmae_pct": round(nmae(naive_mw), 3),
             "coverage_raw": round(empirical_coverage(y_test, lo_test, hi_test), 4),
             "coverage_calibrated": round(empirical_coverage(y_test, *cal_test), 4),
+            "coverage_on_calibration_set": round(empirical_coverage(y_calib, *cal_calib), 4),
             "by_lead_bucket": by_bucket,
             "by_region": by_region,
         },

@@ -33,8 +33,9 @@ large systematic bias: mean bias is −0.70% (solar) and +1.89% (wind), against 
 
 Training data is **genuine 24/48/72 hour forecasts** from the Open-Meteo Previous Runs
 archive — what a forecaster actually had at that notice, not a best-available estimate — so
-error growing with lead time is measured rather than assumed, and the uncertainty band widens
-accordingly.
+error growth with lead time is measured rather than assumed. The measured effect is real but
+modest: mean interval width rises 1.8% (solar) and 9.2% (wind) from the 24 h bucket to the
+72 h bucket. Day-to-day weather moves the band far more than lead time does.
 
 Full breakdown: [`reports/benchmark.md`](reports/benchmark.md). Head-to-head against the
 previous single-lead model: [`reports/lead_comparison.json`](reports/lead_comparison.json).

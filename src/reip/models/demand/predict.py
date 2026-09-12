@@ -100,8 +100,24 @@ def predict(
         axis=1,
     )
     horizon_values = frame["horizon_h"].to_numpy(dtype="int32")
-    widening = widening_for(model.metadata.get("conformal_widening", 0.0), horizon_values)
-    lower, upper = apply_conformal(raw[:, 0], raw[:, 2], widening, floor=-np.inf)
+
+    # Calibration is per region, and is a shift followed by a widening. Both halves must be
+    # applied here exactly as the trainer fitted them - applying the widening alone would
+    # leave the interval centred where the model put it, which for TAS1 and VIC1 is several
+    # percent of peak away from where the outcomes are.
+    #
+    # `.get(region, ...)` throughout so an artifact trained before calibration became
+    # per-region still loads and still predicts, under a single pooled correction.
+    stored = model.metadata.get("conformal_widening", 0.0)
+    if isinstance(stored, dict) and region in stored:
+        stored = stored[region]
+    shift = float(model.metadata.get("bias_correction", {}).get(region, 0.0))
+
+    widening = widening_for(stored, horizon_values)
+    lower, upper = apply_conformal(raw[:, 0] + shift, raw[:, 2] + shift, widening, floor=-np.inf)
+    # The median moves with the interval; leaving it behind would put p50 outside its own
+    # band wherever the shift exceeds half the width.
+    raw[:, 1] = raw[:, 1] + shift
     raw[:, 0] = np.minimum(lower, raw[:, 1])
     raw[:, 2] = np.maximum(upper, raw[:, 1])
 

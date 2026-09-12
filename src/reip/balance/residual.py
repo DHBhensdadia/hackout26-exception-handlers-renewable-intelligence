@@ -203,12 +203,29 @@ def compute(
     surplus_mw = np.where(is_surplus, -residual, 0.0)
     shortage_mw = np.where(is_shortage, residual - headroom, 0.0)
 
-    p_surplus = is_surplus.mean(axis=0)
-    p_shortage = is_shortage.mean(axis=0)
+    raw_surplus = is_surplus.mean(axis=0)
+    raw_shortage = is_shortage.mean(axis=0)
+    p_surplus, p_shortage = raw_surplus, raw_shortage
+
+    # Expected magnitudes are E[X] = P(event) x E[X | event], and the first factor is about
+    # to be recalibrated. Splitting them out here keeps the identity intact: recalibrating
+    # the probability without rescaling the energy leaves the two disagreeing, and an hour
+    # reported at 0% probability can carry non-zero expected MWh - which is exactly what the
+    # first validation sweep caught.
+    conditional_surplus = np.divide(
+        surplus_mw.mean(axis=0), raw_surplus, out=np.zeros(n_hours), where=raw_surplus > 0
+    )
+    conditional_shortage = np.divide(
+        shortage_mw.mean(axis=0), raw_shortage, out=np.zeros(n_hours), where=raw_shortage > 0
+    )
+
     if calibrate:
         # Raw ensemble frequencies are sharp but not reliable; see balance/calibration.py.
-        p_surplus = calibration.apply(p_surplus, calibration.load(region, "surplus"))
-        p_shortage = calibration.apply(p_shortage, calibration.load(region, "shortage"))
+        p_surplus = calibration.apply(raw_surplus, calibration.load(region, "surplus"))
+        p_shortage = calibration.apply(raw_shortage, calibration.load(region, "shortage"))
+
+    expected_surplus = p_surplus * conditional_surplus
+    expected_shortage = p_shortage * conditional_shortage
 
     frame = pd.DataFrame(
         {
@@ -224,8 +241,13 @@ def compute(
             "residual_p90_mw": np.quantile(residual, 0.90, axis=0),
             "p_surplus": p_surplus,
             "p_shortage": p_shortage,
-            "expected_surplus_mw": surplus_mw.mean(axis=0),
-            "expected_shortage_mw": shortage_mw.mean(axis=0),
+            "expected_surplus_mw": expected_surplus,
+            "expected_shortage_mw": expected_shortage,
+            # The size of the event WHEN it happens, which is what a reader who wants
+            # "how big would the surplus be" actually means. Kept separate from the
+            # unconditional expectation so neither gets mistaken for the other.
+            "conditional_surplus_mw": conditional_surplus,
+            "conditional_shortage_mw": conditional_shortage,
         }
     )
     # Hourly resolution, so MW averaged over an hour is MWh.
