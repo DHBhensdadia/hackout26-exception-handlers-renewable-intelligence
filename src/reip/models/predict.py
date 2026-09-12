@@ -171,7 +171,7 @@ def predict_frame(
     features = build_features(weather, site)
     aligned = _align_features(features, model.feature_order, site.tech)
     denominator, physics_mw, clearsky_mw = reference_series(
-        features, site, weather.sort_values("valid_time_utc")
+        features, site, weather.sort_values("valid_time_utc", kind="mergesort")
     )
 
     raw = np.column_stack(
@@ -190,7 +190,7 @@ def predict_frame(
     # Applied here, in target units, because that is what the widening was measured in:
     # after this point the numbers become megawatts and the correction would no longer be
     # dimensionally meaningful. The physical clamps below still bound the widened band.
-    horizons = weather.sort_values("valid_time_utc")["horizon_h"].to_numpy(dtype="int32")
+    horizons = weather.sort_values("valid_time_utc", kind="mergesort")["horizon_h"].to_numpy(dtype="int32")
     widening = widening_for(model.metadata.get("conformal_widening", 0.0), horizons)
     lower, upper = apply_conformal(raw[:, 0], raw[:, 2], widening)
 
@@ -224,7 +224,7 @@ def predict_frame(
         night = clearsky < NIGHT_CLEARSKY_FLOOR_MW
         power[night, :] = 0.0
 
-    ordered = weather.sort_values("valid_time_utc").reset_index(drop=True)
+    ordered = weather.sort_values("valid_time_utc", kind="mergesort").reset_index(drop=True)
     return pd.DataFrame(
         {
             "valid_time_utc": pd.DatetimeIndex(features.index),

@@ -335,13 +335,43 @@ def build_features(weather: pd.DataFrame, site: SiteMeta) -> pd.DataFrame:
     Rows are sorted by valid time before any shift or rolling operation: those are
     position-based, so an unsorted frame would compute a lag against the wrong hour and
     produce a subtly, unfalsifiably wrong feature.
+
+    **Multi-lead frames are built per lead.** A single-lead corpus, or a live forecast run,
+    has one row per valid hour, so consecutive rows are consecutive hours and a positional
+    shift means what it looks like. A Previous Runs corpus does not: it carries the same
+    hour three times, once per lead, so sorting by valid time alone interleaves them as
+
+        t0/24h, t0/48h, t0/72h, t1/24h, ...
+
+    and `ghi.shift(-1)` then reaches the *same* hour at a different lead instead of the
+    next hour. That failure is close to undetectable from the outputs - the 48 h forecast
+    for midday is a plausible-looking number very near the 24 h one - so the feature keeps
+    its shape while losing nearly all of its information. `ghi_wm2_lead1` is the
+    highest-gain solar feature, so this would have quietly gutted the model.
+
+    Grouping is applied only when valid times actually repeat, which leaves the serving
+    path byte-for-byte unchanged.
     """
     if weather.empty:
         raise ValueError(f"no weather rows for {site.site_id}")
 
-    ordered = weather.sort_values("valid_time_utc").reset_index(drop=True)
+    # Mergesort for a stable tie order, so rows sharing a valid time keep the same relative
+    # position here as in any caller that sorts the same frame to align against this output.
+    ordered = weather.sort_values("valid_time_utc", kind="mergesort").reset_index(drop=True)
     builder = _solar_features if site.tech is Tech.SOLAR else _wind_features
-    features = builder(ordered, site)
+
+    if ordered["valid_time_utc"].duplicated().any():
+        parts = []
+        for _, group in ordered.groupby("horizon_h", sort=True):
+            # `reset_index` keeps each row's position in `ordered` as a column, so the
+            # per-lead blocks can be woven back into the original order afterwards.
+            block = group.sort_values("valid_time_utc", kind="mergesort").reset_index()
+            built = builder(block.drop(columns="index"), site)
+            built.index = block["index"].to_numpy()
+            parts.append(built)
+        features = pd.concat(parts).sort_index()
+    else:
+        features = builder(ordered, site)
 
     features.index = pd.DatetimeIndex(ordered["valid_time_utc"])
     features.index.name = "valid_time_utc"
