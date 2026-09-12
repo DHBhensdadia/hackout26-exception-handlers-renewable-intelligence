@@ -41,18 +41,26 @@ def smart_persistence(frame: pd.DataFrame, tech: Tech) -> np.ndarray:
     Solar: freeze the clear-sky index at issue time and ride the clear-sky curve. Wind has
     no equivalent deterministic trajectory, so it degenerates to persistence - which is
     itself the honest answer, and part of why wind is the harder forecasting problem.
+
+    The reference is the CLEAR-SKY curve, explicitly, and not whatever the training target
+    happened to normalise by. Those were the same thing under the clear-sky-index target
+    and stopped being the same thing when solar moved to capacity factor: the denominator
+    became a constant, so dividing by it and multiplying straight back returned
+    `power_at_issue` unchanged. Smart persistence silently became plain persistence, and
+    the benchmark went on reporting it under the stronger name - beating it meant less
+    than the report claimed.
     """
     if tech is Tech.WIND:
         return persistence(frame)
 
-    denominator_at_issue = frame["denominator_at_issue_mw"].to_numpy(dtype="float64")
+    clearsky_at_issue = frame["clearsky_at_issue_mw"].to_numpy(dtype="float64")
     index_at_issue = np.divide(
         frame["power_at_issue_mw"].to_numpy(dtype="float64"),
-        denominator_at_issue,
+        clearsky_at_issue,
         out=np.zeros(len(frame)),
-        where=denominator_at_issue > 1e-6,
+        where=clearsky_at_issue > 1e-6,
     )
-    return np.clip(index_at_issue, 0.0, 1.3) * frame["denominator_mw"].to_numpy(dtype="float64")
+    return np.clip(index_at_issue, 0.0, 1.3) * frame["clearsky_mw"].to_numpy(dtype="float64")
 
 
 def climatology(train: pd.DataFrame, test: pd.DataFrame) -> np.ndarray:

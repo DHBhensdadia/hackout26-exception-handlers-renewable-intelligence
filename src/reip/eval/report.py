@@ -70,8 +70,14 @@ def build_holdout_frame(tech: Tech) -> tuple[pd.DataFrame, pd.DataFrame]:
     # Physics-only baseline, reconstructed from the features the model itself received.
     if tech is Tech.SOLAR:
         frame["physics_mw"] = data.X["physics_cf"].to_numpy(dtype="float64") * capacity
+        # The clear-sky curve, kept separate from `denominator_mw`. Under the
+        # capacity-factor target the denominator is a constant, and smart persistence
+        # divided by it and multiplied straight back - silently degenerating into plain
+        # persistence and quietly retiring the strongest solar baseline we have.
+        frame["clearsky_mw"] = data.X["clearsky_cf"].to_numpy(dtype="float64") * capacity
     else:
         frame["physics_mw"] = data.X["cf_powercurve"].to_numpy(dtype="float64") * capacity
+        frame["clearsky_mw"] = capacity
 
     frame = _attach_issue_state(frame, tech)
 
@@ -90,7 +96,9 @@ def _attach_issue_state(frame: pd.DataFrame, tech: Tech) -> pd.DataFrame:
         frame["horizon_h"], unit="h"
     )
 
-    observed = frame.set_index(["site_id", "valid_time_utc"])[["actual_mw", "denominator_mw"]]
+    observed = frame.set_index(["site_id", "valid_time_utc"])[
+        ["actual_mw", "denominator_mw", "clearsky_mw"]
+    ]
     lookup_index = pd.MultiIndex.from_arrays(
         [frame["site_id"], frame["issue_time_utc"]], names=["site_id", "valid_time_utc"]
     )
@@ -99,6 +107,9 @@ def _attach_issue_state(frame: pd.DataFrame, tech: Tech) -> pd.DataFrame:
     frame["power_at_issue_mw"] = np.nan_to_num(at_issue["actual_mw"].to_numpy(dtype="float64"))
     frame["denominator_at_issue_mw"] = np.nan_to_num(
         at_issue["denominator_mw"].to_numpy(dtype="float64")
+    )
+    frame["clearsky_at_issue_mw"] = np.nan_to_num(
+        at_issue["clearsky_mw"].to_numpy(dtype="float64")
     )
     return frame
 

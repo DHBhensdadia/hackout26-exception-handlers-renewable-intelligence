@@ -27,11 +27,11 @@ The corpus carries genuine 24-72 h leads.
 
 | Method | nMAE %cap | nRMSE %cap | Bias %cap | R2 | Skill vs smart persistence % |
 |---|---:|---:|---:|---:|---:|
-| **Model (quantile GBDT)** | 5.67 | 12.39 | -0.70 | 0.79 | 20.21 |
-| Persistence | 7.10 | 15.73 | 0.23 | 0.63 | 0.00 |
-| Smart persistence | 7.10 | 15.73 | 0.23 | 0.63 | 0.00 |
-| Climatology | 7.51 | 14.95 | 0.35 | 0.66 | -5.73 |
-| Physics only (no ML) | 14.61 | 27.12 | -10.41 | -0.10 | -105.76 |
+| **Model (quantile GBDT)** | 5.67 | 12.39 | -0.70 | 0.79 | 23.55 |
+| Persistence | 7.10 | 15.73 | 0.23 | 0.63 | 4.18 |
+| Smart persistence | 7.41 | 15.91 | 1.15 | 0.63 | 0.00 |
+| Climatology | 7.51 | 14.95 | 0.35 | 0.66 | -1.31 |
+| Physics only (no ML) | 14.61 | 27.12 | -10.41 | -0.10 | -97.16 |
 
 Mean pinball loss on the dimensionless target: **0.0171**
 (p10 0.0128, p50 0.0283, p90 0.0100).
@@ -43,10 +43,10 @@ against a nominal 80%, with a mean width of 18.1% of capacity.
 
 | Lead | n | Model nMAE | Persistence | Smart persist. | Climatology | Physics only | Skill % | PICP % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1-24h | 168552 | 5.54 | 6.34 | 6.34 | 7.51 | 14.52 | 12.60 | 91.61 |
-| 25-48h | 168552 | 5.69 | 7.37 | 7.37 | 7.51 | 14.67 | 22.84 | 91.31 |
-| 49-72h | 168552 | 5.77 | 7.60 | 7.60 | 7.51 | 14.65 | 24.02 | 91.45 |
-| all | 505656 | 5.67 | 7.10 | 7.10 | 7.51 | 14.61 | 20.21 | 91.46 |
+| 1-24h | 168552 | 5.54 | 6.34 | 6.74 | 7.51 | 14.52 | 17.76 | 91.61 |
+| 25-48h | 168552 | 5.69 | 7.37 | 7.65 | 7.51 | 14.67 | 25.62 | 91.31 |
+| 49-72h | 168552 | 5.77 | 7.60 | 7.85 | 7.51 | 14.65 | 26.49 | 91.45 |
+| all | 505656 | 5.67 | 7.10 | 7.41 | 7.51 | 14.61 | 23.55 | 91.46 |
 
 Top features by gain: ghi_wm2_lead1, solar_zenith, solar_elevation, site_latitude, ghi_wm2_lead2, site_tilt, cloud_total_roll_mean, site_capacity_mw.
 
