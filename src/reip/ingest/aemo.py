@@ -110,9 +110,23 @@ class ResolvedUnit:
             latitude=self.latitude,
             longitude=self.longitude,
             timezone="Australia/Brisbane",
+            market_region=STATE_TO_REGION.get(self.state.upper()),
             hub_height_m=None,
             rotor_diameter_m=None,
         ).defaulted
+
+
+# NEM pricing regions, which are not quite states: the ACT sits inside NSW1 and has no
+# region of its own. Everything downstream nets generation against demand within a region,
+# so a plant filed under the wrong one would be balanced against load it cannot reach.
+STATE_TO_REGION: dict[str, str] = {
+    "NSW": "NSW1",
+    "ACT": "NSW1",
+    "QLD": "QLD1",
+    "SA": "SA1",
+    "TAS": "TAS1",
+    "VIC": "VIC1",
+}
 
 
 # --------------------------------------------------------------------------------------
@@ -572,7 +586,11 @@ def merge_sites_into_registry(sites: list[SiteMeta], registry_path: Path | None 
     for site in sites:
         record = site.model_dump(mode="json", exclude_none=True)
         record["tech"] = site.tech.value
-        existing[site.site_id] = record
+        # Merge into the existing record rather than replacing it. `exclude_none=True`
+        # means `record` holds only what this ingest actually determined, so anything it
+        # left unset - a hub height fitted separately, a mount type recovered by
+        # `physics/fit_plant.py` - survives instead of being silently dropped on re-run.
+        existing[site.site_id] = {**existing.get(site.site_id, {}), **record}
 
     raw["sites"] = [existing[k] for k in sorted(existing)]
     registry_path.write_text(
