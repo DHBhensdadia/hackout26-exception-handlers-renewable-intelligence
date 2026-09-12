@@ -76,6 +76,11 @@ class ScenarioSet:
     site_ids: list[str]
     valid_times: pd.DatetimeIndex
     horizons: np.ndarray
+    # The historical hour each scenario's error block starts at. Timestamps, not indices:
+    # the demand store covers a different period, so only a clock reference can put both
+    # ensembles on the same hours - which is what keeps a hot still afternoon one event
+    # rather than two independent ones.
+    block_starts: pd.DatetimeIndex | None = None
 
     @property
     def n_scenarios(self) -> int:
@@ -192,7 +197,7 @@ def generate_from_arrays(
     """
     n_hours = len(valid_times)
     store = residual_store.load(tech) if store is None else store
-    blocks = residual_store.template_blocks(
+    blocks, block_times = residual_store.template_blocks(
         store, site_ids, n_hours, start_hour=int(pd.DatetimeIndex(valid_times)[0].hour)
     )
 
@@ -205,7 +210,9 @@ def generate_from_arrays(
             len(blocks),
             n_scenarios,
         )
-    chosen = blocks[rng.choice(len(blocks), size=n_scenarios, replace=replace)]
+    picks = rng.choice(len(blocks), size=n_scenarios, replace=replace)
+    chosen = blocks[picks]
+    chosen_times = block_times[picks]
 
     # Sites absent from the store have no history to draw on. Give them zero perturbation
     # rather than an invented one: the median forecast is the honest answer for a plant
@@ -247,6 +254,7 @@ def generate_from_arrays(
         site_ids=list(site_ids),
         valid_times=pd.DatetimeIndex(valid_times),
         horizons=np.asarray(horizons, dtype="int16"),
+        block_starts=chosen_times,
     )
 
 

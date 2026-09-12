@@ -80,6 +80,7 @@ artifacts/*
 # Calibration constants, not trained weights: small, text, and required to reproduce a
 # served forecast. Losing them would silently change what the platform outputs.
 !artifacts/scenario_dispersion.json
+!artifacts/balance_calibration.json
 
 # ==============================================================================
 # Reports

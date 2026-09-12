@@ -107,15 +107,15 @@ def test_blocks_are_aligned_to_the_hour_of_day(synthetic_store):
     still looks like a plausible day.
     """
     for hour in (0, 6, 13):
-        blocks = residual_store.template_blocks(
+        blocks, _ = residual_store.template_blocks(
             synthetic_store, list(synthetic_store.columns), HOURS, start_hour=hour
         )
         assert len(blocks) > 0
 
-    unaligned = residual_store.template_blocks(
+    unaligned, _ = residual_store.template_blocks(
         synthetic_store, list(synthetic_store.columns), HOURS
     )
-    aligned = residual_store.template_blocks(
+    aligned, _ = residual_store.template_blocks(
         synthetic_store, list(synthetic_store.columns), HOURS, start_hour=0
     )
     # One start hour in 24 should survive the filter, give or take edge effects.
@@ -133,7 +133,7 @@ def test_contiguity_check_is_resolution_independent():
     for unit in ("ns", "us"):
         index = pd.date_range("2025-01-01", periods=200, freq="h", tz="UTC").as_unit(unit)
         store = pd.DataFrame(np.zeros((len(index), SITES)) + 0.01, index=index, columns=columns)
-        blocks = residual_store.template_blocks(store, columns, HOURS)
+        blocks, _ = residual_store.template_blocks(store, columns, HOURS)
         assert len(blocks) > 0, f"no blocks found on a {unit}-resolution index"
 
 
@@ -145,7 +145,7 @@ def test_gaps_are_never_spliced():
     store = pd.DataFrame(
         np.full((len(index), SITES), 0.01), index=index, columns=columns
     )
-    blocks = residual_store.template_blocks(store, columns, HOURS)
+    blocks, _ = residual_store.template_blocks(store, columns, HOURS)
 
     # Only windows entirely before or entirely after the hole are usable.
     assert 0 < len(blocks) <= len(index) - HOURS

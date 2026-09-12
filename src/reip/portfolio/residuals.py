@@ -118,8 +118,14 @@ def template_blocks(
     *,
     min_coverage: float = MIN_SITE_COVERAGE,
     start_hour: int | None = None,
-) -> np.ndarray:
-    """Every usable contiguous window of the residual field, as `(block, hour, site)`.
+) -> tuple[np.ndarray, pd.DatetimeIndex]:
+    """Usable contiguous windows of the residual field, plus the hour each one starts at.
+
+    Returns `(blocks, starts)` where blocks is `(block, hour, site)`. The start timestamps
+    matter as much as the values: another ensemble drawn from a *different* store - demand,
+    which covers a longer period - can only be aligned to the same historical hours by
+    timestamp. Sharing integer indices across two differently-indexed stores would silently
+    pair unrelated hours.
 
     Contiguity is checked against the clock rather than assumed from row order: the holdout
     has gaps where a plant was offline or an archive month was short, and splicing across
@@ -156,6 +162,7 @@ def template_blocks(
     step_ok = np.diff(times.to_numpy()) == np.timedelta64(1, "h")
     hour_of_day = times.hour.to_numpy()
     blocks: list[np.ndarray] = []
+    starts: list[pd.Timestamp] = []
     start = 0
     while start + hours <= len(times):
         if not step_ok[start : start + hours - 1].all():
@@ -170,6 +177,7 @@ def template_blocks(
         coverage = float(np.isfinite(window).all(axis=0).mean())
         if coverage >= min_coverage:
             blocks.append(np.nan_to_num(window, nan=0.0))
+            starts.append(times[start])
         start += 1
 
     if not blocks:
@@ -183,7 +191,7 @@ def template_blocks(
         len(blocks), hours, len(available),
         f", aligned to {start_hour:02d}:00 UTC" if start_hour is not None else "",
     )
-    return np.stack(blocks)
+    return np.stack(blocks), pd.DatetimeIndex(starts)
 
 
 def main(techs: list[Tech] | None = None) -> dict[str, tuple[int, int]]:
@@ -194,13 +202,71 @@ def main(techs: list[Tech] | None = None) -> dict[str, tuple[int, int]]:
     return shapes
 
 
+DEMAND_STORE = "residuals_demand.parquet"
+
+
+def demand_store_path(directory: Path | None = None) -> Path:
+    return (directory or get_settings().data_canonical) / DEMAND_STORE
+
+
+def build_demand(*, out_path: Path | None = None) -> pd.DataFrame:
+    """Demand forecast errors, normalised by regional peak, one column per region.
+
+    Kept on the same hourly index as the generation stores on purpose. Drawing a demand
+    block and a generation block from the *same* historical hours reproduces whatever
+    relationship the two errors really have - a hot still afternoon that pushes demand up
+    and wind down is one event, and sampling them independently would break it apart.
+    Nothing needs to be assumed about the coupling because nothing is modelling it.
+    """
+    from reip.models.demand.features import LOAD_CENTRES
+    from reip.models.demand.predict import holdout_predictions, load_demand_model
+
+    model = load_demand_model()
+    columns = {}
+    for region in sorted(LOAD_CENTRES):
+        if region not in model.metadata["regions"]:
+            continue
+        frame = holdout_predictions(region)
+        peak = model.peak_mw(region)
+        series = pd.Series(
+            (frame["actual_mw"] - frame["p50_mw"]).to_numpy() / peak,
+            index=pd.DatetimeIndex(frame["valid_time_utc"]),
+        )
+        columns[region] = series[~series.index.duplicated()].sort_index()
+
+    if not columns:
+        raise RuntimeError("no demand regions available to build a residual store")
+
+    wide = pd.DataFrame(columns).sort_index()
+    out_path = out_path or demand_store_path()
+    wide.to_parquet(out_path)
+    log.info(
+        "demand residual store: %s hours x %d regions, %s to %s",
+        f"{len(wide):,}", wide.shape[1], wide.index.min(), wide.index.max(),
+    )
+    return wide
+
+
+def load_demand(path: Path | None = None) -> pd.DataFrame:
+    path = path or demand_store_path()
+    if not path.exists():
+        raise FileNotFoundError(
+            f"no demand residual store at {path}; run `python -m reip.portfolio.residuals --demand`"
+        )
+    return pd.read_parquet(path)
+
+
 if __name__ == "__main__":
     import argparse
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description="Build the historical residual store")
     parser.add_argument("--tech", action="append", choices=[t.value for t in Tech])
+    parser.add_argument("--demand", action="store_true", help="also build the demand store")
     args = parser.parse_args()
 
     for name, shape in main([Tech(t) for t in args.tech] if args.tech else None).items():
         print(f"{name}: {shape[0]:,} hours x {shape[1]} sites")
+    if args.demand:
+        wide = build_demand()
+        print(f"demand: {len(wide):,} hours x {wide.shape[1]} regions")
