@@ -1,0 +1,132 @@
+{
+  "model_version": "xgb-q-0.1.0",
+  "kind": "demand",
+  "backend": "xgboost",
+  "trained_at_utc": "2026-09-12T16:18:08.480723+00:00",
+  "regions": [
+    "NSW1",
+    "QLD1",
+    "SA1",
+    "TAS1",
+    "VIC1"
+  ],
+  "feature_order": [
+    "horizon_h",
+    "lead_day",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_holiday",
+    "temp_2m_c",
+    "cloud_total",
+    "wind_speed_10m",
+    "ghi_wm2",
+    "cooling_degrees",
+    "heating_degrees",
+    "cooling_degrees_24h",
+    "load_lag_1h",
+    "load_lag_24h",
+    "load_lag_168h",
+    "rooftop_lag_24h",
+    "load_mean_24h",
+    "load_std_24h",
+    "load_mean_168h",
+    "load_std_168h",
+    "region_NSW1",
+    "region_QLD1",
+    "region_SA1",
+    "region_TAS1",
+    "region_VIC1",
+    "region_peak_mw"
+  ],
+  "dropped_constant_features": [],
+  "n_rows": 2088273,
+  "split": {
+    "train": 1251985,
+    "val": 209008,
+    "calib": 209120,
+    "test": 418160
+  },
+  "training_window": [
+    "2023-09-07 15:00:00+00:00",
+    "2026-08-31 13:00:00+00:00"
+  ],
+  "peak_mw": {
+    "NSW1": 12333.068063333334,
+    "QLD1": 10016.0741325,
+    "SA1": 2755.3729241666665,
+    "TAS1": 1626.3161916666668,
+    "VIC1": 8723.918705000006
+  },
+  "conformal_widening": {
+    "all": 0.015513854782268743,
+    "1-24h": 0.014892324795444112,
+    "25-48h": 0.015933474316304874,
+    "49-72h": 0.016365695903090227
+  },
+  "best_rounds": {
+    "p10": 340,
+    "p50": 1484,
+    "p90": 302
+  },
+  "test": {
+    "model_nmae_pct": 3.153,
+    "seasonal_naive_nmae_pct": 10.876,
+    "coverage_raw": 0.6686,
+    "coverage_calibrated": 0.8181,
+    "by_lead_bucket": {
+      "1-24h": {
+        "n": 209080,
+        "model_nmae_pct": 3.08,
+        "seasonal_naive_nmae_pct": 10.327,
+        "coverage": 0.8182,
+        "mean_width_pct": 10.798
+      },
+      "25-48h": {
+        "n": 104540,
+        "model_nmae_pct": 3.208,
+        "seasonal_naive_nmae_pct": 11.408,
+        "coverage": 0.818,
+        "mean_width_pct": 11.07
+      },
+      "49-72h": {
+        "n": 104540,
+        "model_nmae_pct": 3.246,
+        "seasonal_naive_nmae_pct": 11.443,
+        "coverage": 0.8179,
+        "mean_width_pct": 11.169
+      }
+    },
+    "by_region": {
+      "NSW1": {
+        "model_nmae_pct": 2.271,
+        "seasonal_naive_nmae_pct": 10.398
+      },
+      "QLD1": {
+        "model_nmae_pct": 1.842,
+        "seasonal_naive_nmae_pct": 10.364
+      },
+      "SA1": {
+        "model_nmae_pct": 3.172,
+        "seasonal_naive_nmae_pct": 14.177
+      },
+      "TAS1": {
+        "model_nmae_pct": 4.148,
+        "seasonal_naive_nmae_pct": 7.785
+      },
+      "VIC1": {
+        "model_nmae_pct": 4.333,
+        "seasonal_naive_nmae_pct": 11.656
+      }
+    }
+  },
+  "artifacts": {
+    "p10": "demand_p10.json",
+    "p50": "demand_p50.json",
+    "p90": "demand_p90.json"
+  }
+}

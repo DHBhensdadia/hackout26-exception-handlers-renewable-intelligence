@@ -1,37 +1,60 @@
-# Renewable Energy Intelligence Platform — Phase 1
+# Renewable Energy Intelligence Platform
 
 **24–72 hour solar and wind power forecasting with calibrated uncertainty bands.**
 
-Phase 1 of the platform described in `renewable_energy_intelligence_platform_project_spec.md`.
-Section 25 of that spec makes forecasting the central model that Modules 2–7 all consume, so
-this phase delivers not just a model but **the forecast contract those six modules will be
-built against**.
+The platform described in `renewable_energy_intelligence_platform_project_spec.md`. Section 25
+of that spec makes forecasting the central model that Modules 2–7 all consume, so Phase 1
+delivers not just a model but **the forecast contract those six modules are built against**.
+Phase 2 builds the first consumers of it — regional demand, energy balance and storage.
 
 ## Results
 
-Measured on a contiguous holdout block that no model or baseline saw during fitting.
-Errors are normalised by installed capacity.
+Two numbers matter, and they answer different questions. Both are normalised by installed
+capacity and neither was seen during fitting.
 
-| | Model nMAE | Smart persistence | Physics only | **Skill** | PICP (nominal 80%) |
+**Generalisation to plants with no history** — 20% of sites held out entirely, which is the
+question `/forecast` actually gets asked, since it takes an arbitrary latitude and longitude:
+
+| | nMAE | 24 h | 48 h | 72 h | Interval coverage (nominal 80%) |
 |---|---:|---:|---:|---:|---:|
-| **Solar** | **6.66%** | 13.76% | 17.18% | **+52%** | 80.9% |
-| **Wind** | **13.58%** | 25.42% | 19.94% | **+47%** | 81.3% |
+| **Solar** | **8.35%** | 8.22% | 8.35% | 8.49% | 82.7% |
+| **Wind** | **14.24%** | 13.69% | 14.12% | 14.92% | 78.9% |
 
-The model beats all four baselines on both technologies. Mean bias is −1.55% (solar) and
-+0.33% (wind), against +13.7% and +15.0% for the physics-only estimate — the learned
-correction is removing a large systematic bias, which is exactly what it was designed to do.
+**Against baselines**, on a contiguous time holdout at sites the model knows:
 
-Full breakdown: [`reports/benchmark.md`](reports/benchmark.md).
+| | Model | Smart persistence | Climatology | Physics only |
+|---|---:|---:|---:|---:|
+| **Solar** | **5.67%** | 7.41% | 7.51% | 14.61% |
+| **Wind** | **11.91%** | 28.41% | 25.86% | 16.20% |
+
+The model beats every baseline on both technologies. The learned correction also removes a
+large systematic bias: mean bias is −0.70% (solar) and +1.89% (wind), against −10.41% and
++5.87% for the physics-only estimate.
+
+Training data is **genuine 24/48/72 hour forecasts** from the Open-Meteo Previous Runs
+archive — what a forecaster actually had at that notice, not a best-available estimate — so
+error growing with lead time is measured rather than assumed, and the uncertainty band widens
+accordingly.
+
+Full breakdown: [`reports/benchmark.md`](reports/benchmark.md). Head-to-head against the
+previous single-lead model: [`reports/lead_comparison.json`](reports/lead_comparison.json).
 
 ## Quick start
 
 ```bash
 uv sync --extra dev
-uv run pytest                                        # 41 tests
+uv run pytest                                        # 64 tests
 
-uv run python -m reip.ingest.gefcom                  # download + canonicalise training data
-uv run python -m reip.physics.fit_location           # recover anonymised site coordinates
-uv run python -m reip.models.train                   # fit p10/p50/p90 for solar and wind
+# Generation: real plant output, then matching multi-lead forecast weather
+uv run python -m reip.ingest.aemo                    # AEMO SCADA -> canonical parquet
+uv run python -m reip.ingest.build_corpus     --start 2025-05-01 --end 2026-08-31     --source previous_runs --corpus aemo_ml          # genuine 24/48/72h leads
+
+# Market: regional demand, spot price, rooftop PV
+uv run python -m reip.ingest.aemo_market --years 3
+uv run python -m reip.models.demand.weather          # weather at each load centre
+
+uv run python -m reip.models.train                   # p10/p50/p90 for solar and wind
+uv run python -m reip.models.demand.train            # p10/p50/p90 for regional demand
 uv run python -m reip.eval.report                    # benchmark against baselines
 
 uv run uvicorn reip.api.main:app --port 8000
@@ -121,13 +144,16 @@ fell to −0.05. After the fix: 3.6% at cap, correlation 0.42.
 
 ## Known limitations
 
-**Forecast lead time.** GEFCom2014 supplies one day-ahead run per day, so the horizons
-genuinely present in training are **1–24 h**. The model is horizon-agnostic by construction —
-it learns `power = f(weather)`, and what degrades with lead time is the accuracy of the
-weather input, not the weather-to-power mapping — so it serves the full 72 h correctly from a
-72 h NWP. But the *measured* skill figures above are 1–24 h figures. Widening the uncertainty
-band with lead time requires calibrating NWP error growth against Open-Meteo Previous Runs,
-which is the first item of Phase 2.
+**Forecast lead time — resolved in Phase 2.** Phase 1 trained on a single nominal 24 h lead,
+so `horizon_h` was constant, was dropped as a feature, and the band could not widen with
+horizon. The corpus was rebuilt from Open-Meteo Previous Runs at genuine 24/48/72 h leads
+(2.53 M solar rows, 2.76 M wind, 151 sites, 16 months). `horizon_h` now survives feature
+selection and interval width grows with lead: 0.215 → 0.216 → 0.219 for solar, 0.391 → 0.405
+→ 0.427 for wind.
+
+The remaining limitation is *history length*: 16 months rather than three years, because all
+three leads at three years costs about two days of API quota. Sixteen months covers a full
+seasonal cycle but not interannual variation.
 
 **Domain shift.** Trained on Australian plants with ECMWF fields (2012–2014), served on
 Open-Meteo ICON forecasts for Indian sites. Mitigated structurally — dimensionless targets,

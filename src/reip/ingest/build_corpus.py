@@ -38,8 +38,15 @@ def build(
     batch_size: int = 1,
     limit: int | None = None,
     source: str = "previous_runs",
+    corpus: str = "aemo",
 ) -> dict[str, object]:
-    """Fetch weather for every AEMO site with generation data and write canonical parquet."""
+    """Fetch weather for every AEMO site with generation data and write canonical parquet.
+
+    `corpus` names the weather half of the output. It exists so a re-fetch under different
+    terms - a different source, or different lead days - lands beside the existing corpus
+    instead of on top of it, leaving the two directly comparable. The power half is shared
+    and never rewritten, because the generation data does not change when the weather does.
+    """
     settings = get_settings()
     settings.ensure_dirs()
     registry = SiteRegistry.load()
@@ -77,8 +84,8 @@ def build(
         if missing:
             log.warning("%s: %d sites have no weather and are excluded", tech.value, len(missing))
 
-        validated = validate_weather(weather, name=f"aemo-{tech.value}")
-        out_path = settings.data_canonical / f"aemo_{tech.value}_weather.parquet"
+        validated = validate_weather(weather, name=f"{corpus}-{tech.value}")
+        out_path = settings.data_canonical / f"{corpus}_{tech.value}_weather.parquet"
         validated.to_parquet(out_path, index=False)
 
         # The power corpus is deliberately NOT rewritten to match. `assemble` already skips
@@ -117,6 +124,11 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--source", default="previous_runs", choices=["previous_runs", "historical_forecast"])
+    parser.add_argument(
+        "--corpus",
+        default="aemo",
+        help="name for the weather half; use a new name to keep an existing corpus intact",
+    )
     args = parser.parse_args()
 
     result = build(
@@ -126,5 +138,6 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         limit=args.limit,
         source=args.source,
+        corpus=args.corpus,
     )
     print(json.dumps(result, indent=2, default=str)[:2000])

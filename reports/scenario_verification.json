@@ -1,0 +1,182 @@
+[
+  {
+    "tech": "solar",
+    "region": "SA1",
+    "n_sites": 7,
+    "n_windows": 40,
+    "n_scenarios": 200,
+    "dispersion": 1.0,
+    "copula": {
+      "coverage": 0.8024,
+      "mean_width_mw": 39.95
+    },
+    "naive_quantile_sum": {
+      "coverage": 0.992,
+      "mean_width_mw": 103.37
+    },
+    "marginals_preserved": {
+      "per_site_coverage_before": 0.8957,
+      "per_site_coverage_after": 0.8168
+    },
+    "rank_histogram": [
+      1692,
+      147,
+      99,
+      95,
+      65,
+      72,
+      42,
+      44,
+      29,
+      27,
+      41,
+      49,
+      36,
+      45,
+      42,
+      55,
+      37,
+      51,
+      57,
+      71,
+      84
+    ],
+    "rank_histogram_flatness": 2.5431,
+    "naive_width_ratio": 2.587
+  },
+  {
+    "tech": "wind",
+    "region": "SA1",
+    "n_sites": 26,
+    "n_windows": 40,
+    "n_scenarios": 200,
+    "dispersion": 2.5,
+    "copula": {
+      "coverage": 0.8354,
+      "mean_width_mw": 870.17
+    },
+    "naive_quantile_sum": {
+      "coverage": 0.9917,
+      "mean_width_mw": 1036.42
+    },
+    "marginals_preserved": {
+      "per_site_coverage_before": 0.7941,
+      "per_site_coverage_after": 0.9727
+    },
+    "rank_histogram": [
+      197,
+      243,
+      177,
+      153,
+      128,
+      151,
+      128,
+      148,
+      176,
+      202,
+      189,
+      175,
+      185,
+      173,
+      130,
+      95,
+      82,
+      82,
+      52,
+      14,
+      0
+    ],
+    "rank_histogram_flatness": 0.4491,
+    "naive_width_ratio": 1.191
+  },
+  {
+    "tech": "solar",
+    "region": "NSW1",
+    "n_sites": 25,
+    "n_windows": 40,
+    "n_scenarios": 200,
+    "dispersion": 1.0,
+    "copula": {
+      "coverage": 0.7177,
+      "mean_width_mw": 149.01
+    },
+    "naive_quantile_sum": {
+      "coverage": 1.0,
+      "mean_width_mw": 519.89
+    },
+    "marginals_preserved": {
+      "per_site_coverage_before": 0.9126,
+      "per_site_coverage_after": 0.8487
+    },
+    "rank_histogram": [
+      367,
+      148,
+      237,
+      126,
+      67,
+      118,
+      160,
+      159,
+      73,
+      88,
+      119,
+      181,
+      111,
+      90,
+      66,
+      64,
+      114,
+      135,
+      156,
+      128,
+      173
+    ],
+    "rank_histogram_flatness": 0.4871,
+    "naive_width_ratio": 3.489
+  },
+  {
+    "tech": "wind",
+    "region": "NSW1",
+    "n_sites": 17,
+    "n_windows": 40,
+    "n_scenarios": 200,
+    "dispersion": 2.5,
+    "copula": {
+      "coverage": 0.8656,
+      "mean_width_mw": 691.42
+    },
+    "naive_quantile_sum": {
+      "coverage": 1.0,
+      "mean_width_mw": 961.08
+    },
+    "marginals_preserved": {
+      "per_site_coverage_before": 0.7763,
+      "per_site_coverage_after": 0.968
+    },
+    "rank_histogram": [
+      152,
+      191,
+      191,
+      198,
+      174,
+      208,
+      171,
+      176,
+      190,
+      185,
+      180,
+      196,
+      138,
+      141,
+      93,
+      83,
+      91,
+      63,
+      38,
+      17,
+      4
+    ],
+    "rank_histogram_flatness": 0.4602,
+    "naive_width_ratio": 1.39
+  }
+]

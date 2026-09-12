@@ -110,9 +110,23 @@ class ResolvedUnit:
             latitude=self.latitude,
             longitude=self.longitude,
             timezone="Australia/Brisbane",
+            market_region=STATE_TO_REGION.get(self.state.upper()),
             hub_height_m=None,
             rotor_diameter_m=None,
         ).defaulted
+
+
+# NEM pricing regions, which are not quite states: the ACT sits inside NSW1 and has no
+# region of its own. Everything downstream nets generation against demand within a region,
+# so a plant filed under the wrong one would be balanced against load it cannot reach.
+STATE_TO_REGION: dict[str, str] = {
+    "NSW": "NSW1",
+    "ACT": "NSW1",
+    "QLD": "QLD1",
+    "SA": "SA1",
+    "TAS": "TAS1",
+    "VIC": "VIC1",
+}
 
 
 # --------------------------------------------------------------------------------------
@@ -358,26 +372,42 @@ def profile_matches_technology(
     return True, "ok"
 
 
+MARKET_TIME_FORMAT = "%Y/%m/%d %H:%M:%S"
+
+
+def market_to_utc(stamps: pd.Series, *, interval_minutes: int) -> pd.Series:
+    """Market-time interval-ENDING stamps to UTC interval-STARTING timestamps.
+
+    Two corrections, both of which are silent when wrong, which is why they live in one
+    function that every AEMO table goes through rather than being repeated per caller.
+
+    Market time is UTC+10 year-round with no daylight saving - not the local time of any
+    particular state for half the year. And every settlement stamp labels the END of its
+    interval, so 00:05 describes 00:00-00:05. Miss either and the data still parses, still
+    aggregates, and simply describes the wrong hour; downstream that becomes a plant whose
+    sun rises an hour late, or demand that peaks before the load that caused it.
+
+    Unparseable stamps come back as NaT rather than raising, so the caller can decide
+    whether a few bad rows are worth losing the month over.
+    """
+    market = pd.to_datetime(stamps, format=MARKET_TIME_FORMAT, errors="coerce")
+    starts = market - pd.Timedelta(minutes=interval_minutes)
+    return (starts - pd.Timedelta(hours=MARKET_TZ_OFFSET_H)).dt.tz_localize(UTC)
+
+
 def to_hourly_utc(frame: pd.DataFrame) -> pd.DataFrame:
     """Convert 5-minute market-time SCADA to hourly UTC means.
-
-    Market time is UTC+10 with no daylight saving, and the settlement stamp labels the END
-    of its interval. Both are corrected here, before any aggregation, because a shifted
-    timestamp cannot be recovered downstream - it just becomes a plant whose sun rises at
-    the wrong hour.
 
     Hourly *mean* is the right aggregation: it matches how both weather providers publish
     irradiance and wind, so target and features describe the same hour in the same way.
     """
-    market = pd.to_datetime(frame["market_time"], format="%Y/%m/%d %H:%M:%S", errors="coerce")
-    valid = market.notna()
+    converted = market_to_utc(frame["market_time"], interval_minutes=5)
+    valid = converted.notna()
     if not valid.all():
         log.warning("dropping %d rows with unparseable settlement stamps", int((~valid).sum()))
 
     out = frame[valid].copy()
-    # Interval-ending -> interval-starting, then market time -> UTC.
-    starts = market[valid] - pd.Timedelta(minutes=5)
-    out["valid_time_utc"] = (starts - pd.Timedelta(hours=MARKET_TZ_OFFSET_H)).dt.tz_localize(UTC)
+    out["valid_time_utc"] = converted[valid]
 
     out["mw"] = out["mw"].clip(lower=0.0)  # auxiliary draw is real but is not generation
     hourly = (
@@ -572,7 +602,11 @@ def merge_sites_into_registry(sites: list[SiteMeta], registry_path: Path | None 
     for site in sites:
         record = site.model_dump(mode="json", exclude_none=True)
         record["tech"] = site.tech.value
-        existing[site.site_id] = record
+        # Merge into the existing record rather than replacing it. `exclude_none=True`
+        # means `record` holds only what this ingest actually determined, so anything it
+        # left unset - a hub height fitted separately, a mount type recovered by
+        # `physics/fit_plant.py` - survives instead of being silently dropped on re-run.
+        existing[site.site_id] = {**existing.get(site.site_id, {}), **record}
 
     raw["sites"] = [existing[k] for k in sorted(existing)]
     registry_path.write_text(

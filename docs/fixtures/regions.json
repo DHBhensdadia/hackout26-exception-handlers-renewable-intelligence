@@ -1,0 +1,71 @@
+{
+  "regions": [
+    {
+      "region": "NSW1",
+      "technologies": {
+        "solar": {
+          "sites": 27,
+          "capacity_mw": 2910.3
+        },
+        "wind": {
+          "sites": 17,
+          "capacity_mw": 2459.6
+        }
+      },
+      "total_capacity_mw": 5369.9
+    },
+    {
+      "region": "QLD1",
+      "technologies": {
+        "solar": {
+          "sites": 30,
+          "capacity_mw": 2545.6
+        },
+        "wind": {
+          "sites": 4,
+          "capacity_mw": 968.0
+        }
+      },
+      "total_capacity_mw": 3513.6
+    },
+    {
+      "region": "SA1",
+      "technologies": {
+        "solar": {
+          "sites": 9,
+          "capacity_mw": 828.5
+        },
+        "wind": {
+          "sites": 26,
+          "capacity_mw": 2494.2
+        }
+      },
+      "total_capacity_mw": 3322.7
+    },
+    {
+      "region": "TAS1",
+      "technologies": {
+        "wind": {
+          "sites": 4,
+          "capacity_mw": 567.0
+        }
+      },
+      "total_capacity_mw": 567.0
+    },
+    {
+      "region": "VIC1",
+      "technologies": {
+        "solar": {
+          "sites": 10,
+          "capacity_mw": 1126.8
+        },
+        "wind": {
+          "sites": 28,
+          "capacity_mw": 3808.9
+        }
+      },
+      "total_capacity_mw": 4935.7
+    }
+  ],
+  "model_version": "xgb-q-0.1.0"
+}

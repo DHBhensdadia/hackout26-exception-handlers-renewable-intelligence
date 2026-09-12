@@ -58,6 +58,23 @@ class SiteRegistry:
     def by_tech(self, tech: Tech) -> list[SiteMeta]:
         return [s for s in self._sites.values() if s.tech is tech]
 
+    def by_region(self, region: str, tech: Tech | None = None) -> list[SiteMeta]:
+        """Sites dispatching into one market region, optionally of one technology.
+
+        Case-insensitive, because region codes arrive from URLs and request bodies as
+        often as from the registry itself.
+        """
+        wanted = region.strip().upper()
+        return [
+            s
+            for s in self._sites.values()
+            if (s.market_region or "").upper() == wanted and (tech is None or s.tech is tech)
+        ]
+
+    def regions(self) -> list[str]:
+        """Every market region present, sorted. Sites with no region are excluded."""
+        return sorted({s.market_region for s in self._sites.values() if s.market_region})
+
     def all(self) -> list[SiteMeta]:
         return list(self._sites.values())
 

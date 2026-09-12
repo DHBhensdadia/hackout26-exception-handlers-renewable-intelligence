@@ -123,3 +123,59 @@ def test_serving_weather_produces_same_schema_as_training(fixture_weather_payloa
     assert len(features) == len(canonical)
     assert features.index.name == "valid_time_utc"
     assert np.isfinite(features["clearsky_cf"]).all()
+
+
+# ------------------------------------------------------- multi-lead feature integrity
+
+
+def test_lag_features_never_cross_lead_boundaries(solar_weather, registry):
+    """A multi-lead corpus must build features within each lead, not across them.
+
+    Previous Runs carries the same hour three times, once per lead. Sorted by valid time
+    alone those interleave - t0/24h, t0/48h, t0/72h, t1/24h - and a positional shift then
+    reaches the same hour at a different lead instead of the next hour.
+
+    The failure is nearly invisible from the outputs: a 48 h forecast for midday is a
+    plausible number very close to the 24 h one, so the feature keeps its shape and loses
+    almost all of its information. `ghi_wm2_lead1` is the highest-gain solar feature, so
+    getting this wrong degrades the model badly while everything still runs.
+    """
+    site_id = solar_weather["site_id"].iloc[0]
+    block = solar_weather[solar_weather["site_id"] == site_id].sort_values(
+        ["valid_time_utc", "horizon_h"], kind="mergesort"
+    )
+    if not block["valid_time_utc"].duplicated().any():
+        pytest.skip("corpus is single-lead; nothing to interleave")
+
+    site = registry.get(site_id)
+    features = build_features(block, site)
+    assert len(features) == len(block)
+
+    for horizon in sorted(block["horizon_h"].unique()):
+        mask = (block["horizon_h"] == horizon).to_numpy()
+        # The same lead built on its own must produce identical features. If the grouped
+        # build were leaking across leads, these would diverge.
+        standalone = build_features(block[block["horizon_h"] == horizon], site)
+        for column in ("ghi_wm2_lead1", "ghi_wm2_lag1", "cloud_total_roll_mean"):
+            np.testing.assert_allclose(
+                features[mask][column].to_numpy(),
+                standalone[column].to_numpy(),
+                err_msg=f"lead {horizon}h: {column} differs when built alongside other leads",
+            )
+
+
+def test_lead_feature_points_at_the_next_hour(solar_weather, registry):
+    """`ghi_wm2_lead1` must be the next hour's GHI at the same lead - checked directly."""
+    site_id = solar_weather["site_id"].iloc[0]
+    block = solar_weather[solar_weather["site_id"] == site_id].sort_values(
+        ["valid_time_utc", "horizon_h"], kind="mergesort"
+    )
+    horizon = sorted(block["horizon_h"].unique())[0]
+    single = block[block["horizon_h"] == horizon].reset_index(drop=True)
+
+    features = build_features(single, registry.get(site_id)).reset_index(drop=True)
+    np.testing.assert_allclose(
+        features["ghi_wm2_lead1"].to_numpy()[:-1],
+        single["ghi_wm2"].to_numpy()[1:],
+        err_msg="ghi_wm2_lead1 is not the following hour's GHI",
+    )

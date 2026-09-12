@@ -1,0 +1,22 @@
+{
+  "status": "ok",
+  "model_version": "xgb-q-0.1.0",
+  "models_loaded": {
+    "solar": true,
+    "wind": true,
+    "demand": true
+  },
+  "sites_registered": 172,
+  "regions_available": [
+    "NSW1",
+    "QLD1",
+    "SA1",
+    "TAS1",
+    "VIC1"
+  ],
+  "weather_source": "icon_seamless",
+  "scenario_dispersion": {
+    "solar": 1.0,
+    "wind": 2.5
+  }
+}
