@@ -1,0 +1,144 @@
+{
+  "tech": "solar",
+  "mode": "grouped-4",
+  "pooled": {
+    "n": 236247,
+    "n_sites": 9,
+    "nmae_pct": 11.749912354828904,
+    "nrmse_pct": 22.307456320661263,
+    "r2": 0.38604192838233764,
+    "picp_pct": 75.12772648964855,
+    "smart_persistence_nmae_pct": 10.013583602591508,
+    "skill_pct": -17.339733916916966
+  },
+  "by_lead": [
+    {
+      "lead_bucket": "1-24h",
+      "n": 78749,
+      "nmae_pct": 11.740260239560504,
+      "picp_pct": 75.23905065461149,
+      "smart_persistence_nmae_pct": 8.940261168913855
+    },
+    {
+      "lead_bucket": "25-48h",
+      "n": 78749,
+      "nmae_pct": 11.760852164465636,
+      "picp_pct": 75.07650890804962,
+      "smart_persistence_nmae_pct": 10.384600519570137
+    },
+    {
+      "lead_bucket": "49-72h",
+      "n": 78749,
+      "nmae_pct": 11.748624660460578,
+      "picp_pct": 75.06761990628452,
+      "smart_persistence_nmae_pct": 10.71588911929053
+    }
+  ],
+  "per_site": [
+    {
+      "site_id": "AEMO-ADPPV1",
+      "n": 26250,
+      "capacity_mw": 19.73078041666668,
+      "nmae_pct": 14.397138549393842,
+      "nrmse_pct": 25.854688355633854,
+      "r2": -0.603523281570558,
+      "picp_pct": 65.23809523809524,
+      "smart_persistence_nmae_pct": 7.443072046837047,
+      "skill_pct": -93.43005762670191
+    },
+    {
+      "site_id": "AEMO-AVLSF1",
+      "n": 26250,
+      "capacity_mw": 187.5784287375,
+      "nmae_pct": 14.050320629987253,
+      "nrmse_pct": 26.42456499057851,
+      "r2": 0.3369823311253648,
+      "picp_pct": 68.5752380952381,
+      "smart_persistence_nmae_pct": 11.887522107340855,
+      "skill_pct": -18.193854893534223
+    },
+    {
+      "site_id": "AEMO-BANN1",
+      "n": 26250,
+      "capacity_mw": 100.0,
+      "nmae_pct": 13.40876024671398,
+      "nrmse_pct": 25.562739278660025,
+      "r2": -0.043773806326175446,
+      "picp_pct": 91.00190476190477,
+      "smart_persistence_nmae_pct": 8.264014773028592,
+      "skill_pct": -62.25479521740913
+    },
+    {
+      "site_id": "AEMO-BARCSF1",
+      "n": 26247,
+      "capacity_mw": 16.433333045,
+      "nmae_pct": 11.012218784915191,
+      "nrmse_pct": 19.5820289338218,
+      "r2": 0.623628327014533,
+      "picp_pct": 64.17114336876595,
+      "smart_persistence_nmae_pct": 11.056749347587418,
+      "skill_pct": 0.4027455201554675
+    },
+    {
+      "site_id": "AEMO-BERYLSF1",
+      "n": 26250,
+      "capacity_mw": 98.0,
+      "nmae_pct": 9.953774061896665,
+      "nrmse_pct": 19.159733643760802,
+      "r2": 0.5147225889702453,
+      "picp_pct": 87.24190476190476,
+      "smart_persistence_nmae_pct": 8.617247641380258,
+      "skill_pct": -15.509899171266351
+    },
+    {
+      "site_id": "AEMO-BNGSF1",
+      "n": 26250,
+      "capacity_mw": 135.0,
+      "nmae_pct": 10.973504004701203,
+      "nrmse_pct": 20.333479501505593,
+      "r2": 0.05019573579799841,
+      "picp_pct": 72.70095238095237,
+      "smart_persistence_nmae_pct": 8.631600296459279,
+      "skill_pct": -27.13174414717261
+    },
+    {
+      "site_id": "AEMO-BNGSF2",
+      "n": 26250,
+      "capacity_mw": 135.0,
+      "nmae_pct": 10.229693122327028,
+      "nrmse_pct": 20.540477721085253,
+      "r2": 0.3133059961569489,
+      "picp_pct": 77.39428571428572,
+      "smart_persistence_nmae_pct": 11.62995360655308,
+      "skill_pct": 12.040120980680902
+    },
+    {
+      "site_id": "AEMO-BROKENH1",
+      "n": 26250,
+      "capacity_mw": 53.28252333333334,
+      "nmae_pct": 11.865284018385514,
+      "nrmse_pct": 23.200964774344644,
+      "r2": 0.34748814444765985,
+      "picp_pct": 73.52761904761905,
+      "smart_persistence_nmae_pct": 10.469387740468735,
+      "skill_pct": -13.3331223613109
+    },
+    {
+      "site_id": "AEMO-CHILDSF1",
+      "n": 26250,
+      "capacity_mw": 49.11172083333335,
+      "nmae_pct": 9.858433467302909,
+      "nrmse_pct": 18.281591969641315,
+      "r2": 0.6421361498329323,
+      "picp_pct": 76.29714285714286,
+      "smart_persistence_nmae_pct": 12.122824082610585,
+      "skill_pct": 18.67873855033333
+    }
+  ],
+  "spread": {
+    "best_nmae_pct": 9.858433467302909,
+    "median_nmae_pct": 11.012218784915191,
+    "p90_nmae_pct": 14.11968421386857,
+    "worst_nmae_pct": 14.397138549393842
+  }
+}
