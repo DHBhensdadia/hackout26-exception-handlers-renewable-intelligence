@@ -199,14 +199,24 @@ def _section(tech: Tech, scored: dict, metadata: dict) -> str:
         lead_rows.append(entry)
 
     horizons = metadata.get("horizons_present", [1, 24])
+    # `.get` throughout: this report has to keep rendering across metadata schema changes.
+    # It has now broken twice on a renamed key - once on `cv_pinball`, once on
+    # `holdout_starts` - each time after training had already succeeded, which is the worst
+    # moment to lose the write-up of a run that took half an hour.
+    holdout_from = str(metadata.get("val_starts") or metadata.get("holdout_starts") or "")[:10]
+    lead_note = (
+        f"a single nominal {horizons[0]} h lead"
+        if horizons[0] == horizons[1]
+        else f"genuine {horizons[0]}-{horizons[1]} h leads"
+    )
 
     return f"""
 ## {tech.value.title()}
 
 Trained on {metadata["n_train_rows"]:,} rows from {len(metadata["sites"])} sites
 ({metadata["training_window"][0][:10]} to {metadata["training_window"][1][:10]}),
-evaluated on {int(overall["model"]["n"]):,} untouched holdout rows from
-{metadata["holdout_starts"][:10]} onward. Horizons present in this data: {horizons[0]}-{horizons[1]} h.
+evaluated on {int(overall["model"]["n"]):,} untouched holdout rows{f" from {holdout_from} onward" if holdout_from else ""}.
+The corpus carries {lead_note}.
 
 ### Overall, holdout
 

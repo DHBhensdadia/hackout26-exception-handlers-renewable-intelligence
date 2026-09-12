@@ -332,6 +332,13 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
     cal_test = apply_conformal(lower_test, upper_test, widening_for(widening, h_test))
     cal_test_coverage = empirical_coverage(y_test.to_numpy(), *cal_test)
 
+    # MW conversion, hoisted above the bucket loop so per-bucket and headline nMAE are
+    # computed from exactly the same quantities.
+    capacity_test = data.capacity_mw.to_numpy()[split.test]
+    denom_test = data.denominator.to_numpy()[split.test]
+    actual_mw = y_test.to_numpy() * denom_test
+    predicted_mw = np.clip(test_pred["p50"] * denom_test, 0.0, capacity_test)
+
     # Per-bucket coverage and band width on unseen sites. Width must increase with lead,
     # and if it does not the multi-lead corpus has not done its job.
     per_bucket = {}
@@ -342,6 +349,16 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
             continue
         per_bucket[label] = {
             "n": int(mask.sum()),
+            # nMAE per bucket, not only overall. Without it a multi-lead model cannot be
+            # compared against a single-lead one at all: the pooled figure averages three
+            # difficulties, so a genuinely better model can look worse than a predecessor
+            # that was only ever scored on the easiest of them.
+            "nmae_pct": round(
+                float(
+                    100 * np.mean(np.abs(actual_mw[mask] - predicted_mw[mask]) / capacity_test[mask])
+                ),
+                3,
+            ),
             "widening": round(float(widening.get(label, widening["all"])), 6),
             "raw": round(
                 empirical_coverage(y_test.to_numpy()[mask], lower_test[mask], upper_test[mask]), 4
@@ -359,9 +376,10 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
     )
     for label, stats in per_bucket.items():
         log.info(
-            "    %-7s n=%-9s coverage %.1f%%->%.1f%%  mean width %.4f",
+            "    %-7s n=%-9s nMAE %.2f%%  coverage %.1f%%->%.1f%%  mean width %.4f",
             label,
             f"{stats['n']:,}",
+            stats["nmae_pct"],
             100 * stats["raw"],
             100 * stats["calibrated"],
             stats["mean_width"],
@@ -376,10 +394,6 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
     )
 
     # --- honest score on the spatially-unseen test sites -------------------------------
-    capacity_test = data.capacity_mw.to_numpy()[split.test]
-    denom_test = data.denominator.to_numpy()[split.test]
-    actual_mw = y_test.to_numpy() * denom_test
-    predicted_mw = np.clip(test_pred["p50"] * denom_test, 0.0, capacity_test)
     test_nmae = float(100 * np.mean(np.abs(actual_mw - predicted_mw) / capacity_test))
     test_nrmse = float(100 * np.sqrt(np.mean(((actual_mw - predicted_mw) / capacity_test) ** 2)))
     test_bias = float(100 * np.mean((actual_mw - predicted_mw) / capacity_test))

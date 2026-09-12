@@ -2,8 +2,8 @@
   "model_version": "xgb-q-0.1.0",
   "tech": "solar",
   "backend": "xgboost",
-  "trained_at_utc": "2026-09-12T09:03:31.082667+00:00",
-  "git_sha": "unknown",
+  "trained_at_utc": "2026-09-12T16:50:06.176695+00:00",
+  "git_sha": "3263e72",
   "feature_order": [
     "cell_temp_c",
     "clearsky_cf",
@@ -31,9 +31,11 @@
     "ghi_wm2_lead3",
     "ghi_wm2_roll_mean",
     "ghi_wm2_roll_std",
+    "horizon_h",
     "hour_cos",
     "hour_sin",
     "kt_nwp",
+    "lead_day",
     "physics_cf",
     "physics_over_clearsky",
     "poa_clearsky",
@@ -51,27 +53,25 @@
     "cloud_high",
     "cloud_low",
     "cloud_mid",
-    "horizon_h",
-    "lead_day",
     "precip_mm",
     "rh_pct",
     "site_azimuth_cos",
     "site_azimuth_sin"
   ],
-  "n_rows": 1890866,
-  "n_train_rows": 1171055,
-  "n_val_rows": 167637,
-  "n_calib_rows": 184058,
-  "n_holdout_rows": 368116,
+  "n_rows": 2527617,
+  "n_train_rows": 1566552,
+  "n_val_rows": 223839,
+  "n_calib_rows": 245742,
+  "n_holdout_rows": 491484,
   "split": {
-    "train_rows": 1171055,
-    "val_rows": 167637,
-    "calib_rows": 184058,
-    "test_rows": 368116,
-    "train_pct": 61.9,
+    "train_rows": 1566552,
+    "val_rows": 223839,
+    "calib_rows": 245742,
+    "test_rows": 491484,
+    "train_pct": 62.0,
     "val_pct": 8.9,
     "calib_pct": 9.7,
-    "test_pct": 19.5,
+    "test_pct": 19.4,
     "test_sites": [
       "AEMO-EDENVSF1",
       "AEMO-EMERASF1",
@@ -97,23 +97,51 @@
       "AEMO-WHITSF1",
       "AEMO-YATSF1"
     ],
-    "val_starts": "2026-04-16 14:22:30+00:00"
+    "val_starts": "2026-07-01 14:22:30+00:00"
   },
-  "conformal_widening": -0.0021142123301547988,
+  "conformal_widening": {
+    "all": -0.0020077896338922007,
+    "1-24h": -0.0020077896338922007,
+    "25-48h": -0.0020077896338922007,
+    "49-72h": -0.0020077896338922007
+  },
   "coverage": {
     "target": 0.8,
-    "calib_raw": 0.8652272653185409,
-    "calib_calibrated": 0.8023666452965913,
-    "val_raw": 0.9103240931297983,
-    "val_calibrated": 0.8741566599259113,
-    "test_raw": 0.8601799432787491,
-    "test_calibrated": 0.8366710493431418
+    "calib_raw": 0.8749542202798056,
+    "calib_calibrated": 0.8048196889420612,
+    "val_raw": 0.9163729287568297,
+    "val_calibrated": 0.8839567725016642,
+    "test_raw": 0.852931122884977,
+    "test_calibrated": 0.8267044298491915,
+    "test_by_lead_bucket": {
+      "1-24h": {
+        "n": 163828,
+        "widening": -0.002008,
+        "raw": 0.8545,
+        "calibrated": 0.8282,
+        "mean_width": 0.21464
+      },
+      "25-48h": {
+        "n": 163828,
+        "widening": -0.002008,
+        "raw": 0.8527,
+        "calibrated": 0.826,
+        "mean_width": 0.216067
+      },
+      "49-72h": {
+        "n": 163828,
+        "widening": -0.002008,
+        "raw": 0.8516,
+        "calibrated": 0.8259,
+        "mean_width": 0.218599
+      }
+    }
   },
   "unseen_site_test": {
-    "nmae_pct": 8.304075176502005,
-    "nrmse_pct": 16.843608028150328,
-    "bias_pct": -2.5830589694965282,
-    "n": 368116,
+    "nmae_pct": 8.352517407308403,
+    "nrmse_pct": 16.793007832498006,
+    "bias_pct": -1.7186900857400944,
+    "n": 491484,
     "n_sites": 14
   },
   "sites": [
@@ -191,22 +219,22 @@
     "AEMO-YATSF1"
   ],
   "training_window": [
-    "2023-09-01 00:00:00+00:00",
+    "2025-05-01 00:00:00+00:00",
     "2026-08-31 13:00:00+00:00"
   ],
-  "val_starts": "2026-04-16 14:22:30+00:00",
+  "val_starts": "2026-07-01 14:22:30+00:00",
   "horizons_present": [
     24,
-    24
+    72
   ],
   "val_pinball": {
-    "p10": 0.013826593087355806,
-    "p50": 0.025839305092344833,
-    "p90": 0.008809657887891651
+    "p10": 0.014995703400107141,
+    "p50": 0.030859788252493074,
+    "p90": 0.009574331011667141
   },
   "best_rounds": {
-    "p10": 1872,
-    "p50": 1994,
+    "p10": 1951,
+    "p50": 774,
     "p90": 1999
   },
   "artifacts": {
@@ -215,25 +243,25 @@
     "p90": "solar_p90.json"
   },
   "top_features": {
-    "ghi_wm2_lead1": 5.51649284362793,
-    "solar_zenith": 2.114668607711792,
-    "ghi_wm2": 0.5272193551063538,
-    "ghi_wm2_lead2": 0.4814731478691101,
-    "solar_elevation": 0.4688222408294678,
-    "site_tilt": 0.3347208797931671,
-    "poa_nwp": 0.2914704978466034,
-    "site_latitude": 0.28217974305152893,
-    "physics_over_clearsky": 0.270727276802063,
-    "cloud_total_roll_mean": 0.26243871450424194,
-    "site_capacity_mw": 0.24832232296466827,
-    "clearsky_ghi": 0.22570987045764923,
-    "doy_sin": 0.21589116752147675,
-    "ghi_wm2_roll_mean": 0.2033621072769165,
-    "doy_cos": 0.1425534337759018,
-    "kt_nwp": 0.131536066532135,
-    "physics_cf": 0.1270989626646042,
-    "hour_sin": 0.12014015763998032,
-    "hour_cos": 0.11627237498760223,
-    "cloud_total_lead1": 0.09532129019498825
+    "ghi_wm2_lead1": 6.6996049880981445,
+    "solar_zenith": 2.663785219192505,
+    "solar_elevation": 1.2481905221939087,
+    "site_latitude": 0.9054364562034607,
+    "ghi_wm2_lead2": 0.7705895900726318,
+    "site_tilt": 0.7102526426315308,
+    "cloud_total_roll_mean": 0.5734260678291321,
+    "site_capacity_mw": 0.5643531680107117,
+    "doy_sin": 0.5278013348579407,
+    "clearsky_ghi": 0.4701898396015167,
+    "physics_over_clearsky": 0.4327894449234009,
+    "doy_cos": 0.4263412356376648,
+    "hour_sin": 0.40999922156333923,
+    "ghi_wm2_roll_mean": 0.38935035467147827,
+    "ghi_wm2": 0.2533496618270874,
+    "poa_nwp": 0.22420039772987366,
+    "ghi_wm2_roll_std": 0.21982966363430023,
+    "physics_cf": 0.21927715837955475,
+    "cloud_total_lead3": 0.1978672593832016,
+    "cloud_total_lead2": 0.1834360510110855
   }
 }
