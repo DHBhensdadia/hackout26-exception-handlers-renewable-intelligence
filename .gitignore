@@ -1,0 +1,109 @@
+# ==============================================================================
+# Python
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# ==============================================================================
+# Secrets and local configuration
+# ==============================================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# ==============================================================================
+# Data - regenerable, and far too large for git
+# ==============================================================================
+# The full corpus is ~1.2 GB of raw archives plus ~120 MB of canonical parquet.
+# All of it is reproducible from public sources with two commands, so the pipeline
+# is version-controlled and the bytes are not:
+#
+#   python -m reip.ingest.aemo                    # ~1 GB from nemweb.com.au
+#   python -m reip.ingest.build_corpus ...        # weather from open-meteo.com
+#
+data/*
+!data/.gitkeep
+
+# Third-party datasets dropped in by hand. Licensing varies by source and none of
+# it is ours to redistribute.
+*.zip
+*.xlsx
+*.nc
+*.grib
+*.grib2
+*.om
+
+# HTTP response caches from the ingest modules
+.cache/
+
+# ==============================================================================
+# Model artifacts
+# ==============================================================================
+# The six boosted-tree models are ~160 MB and change on every retrain, so committing
+# them would add 160 MB to history each time and quickly dwarf the source. They are
+# deterministic given the corpus and `random_seed`, and rebuilt with:
+#
+#   python -m reip.models.train
+#
+# The metadata sidecars are kept: a few kilobytes each, and they are the record of
+# what was trained - feature order, split composition, calibration constant, and the
+# unseen-site scores. Reviewing a model change means reading these, not the trees.
+artifacts/*
+!artifacts/.gitkeep
+!artifacts/*_metadata.json
+
+# ==============================================================================
+# Reports
+# ==============================================================================
+# Benchmarks and figures ARE committed: they are the evidence behind the accuracy
+# claims in the README, they are small, and a reviewer should be able to see them
+# in a diff when a model changes. Only scratch comparisons are excluded.
+reports/*_scratch*
+reports/tmp/
+
+# ==============================================================================
+# Scratch output from development
+# ==============================================================================
+*.log
+probe_*.json
+*_probe.json
+scratch/
+notebooks/scratch/
+
+# ==============================================================================
+# Editors and operating systems
+# ==============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
