@@ -1,0 +1,177 @@
+{
+  "tech": "wind",
+  "mode": "grouped-4",
+  "pooled": {
+    "n": 314994,
+    "n_sites": 12,
+    "nmae_pct": 15.006486539353196,
+    "nrmse_pct": 21.25237349780513,
+    "r2": 0.49882423932432807,
+    "picp_pct": 66.63269776567172,
+    "smart_persistence_nmae_pct": 27.32108993916525,
+    "skill_pct": 45.0736168550833
+  },
+  "by_lead": [
+    {
+      "lead_bucket": "1-24h",
+      "n": 104998,
+      "nmae_pct": 14.981530402679565,
+      "picp_pct": 66.7193660831635,
+      "smart_persistence_nmae_pct": 24.1565027683127
+    },
+    {
+      "lead_bucket": "25-48h",
+      "n": 104998,
+      "nmae_pct": 14.998499076530441,
+      "picp_pct": 66.61745938017867,
+      "smart_persistence_nmae_pct": 28.553293457793767
+    },
+    {
+      "lead_bucket": "49-72h",
+      "n": 104998,
+      "nmae_pct": 15.03943013884957,
+      "picp_pct": 66.56126783367301,
+      "smart_persistence_nmae_pct": 29.253473591389284
+    }
+  ],
+  "per_site": [
+    {
+      "site_id": "AEMO-ARWF1",
+      "n": 26250,
+      "capacity_mw": 241.59,
+      "nmae_pct": 14.105158931297254,
+      "nrmse_pct": 20.669740790951348,
+      "r2": 0.06961197134379593,
+      "picp_pct": 68.83809523809525,
+      "smart_persistence_nmae_pct": 22.216972592257132,
+      "skill_pct": 36.51178677596667
+    },
+    {
+      "site_id": "AEMO-BALDHWF1",
+      "n": 26250,
+      "capacity_mw": 106.6,
+      "nmae_pct": 16.63408539683936,
+      "nrmse_pct": 23.068185744026515,
+      "r2": 0.5542221475357247,
+      "picp_pct": 60.94857142857143,
+      "smart_persistence_nmae_pct": 32.89677720651569,
+      "skill_pct": 49.43551676075815
+    },
+    {
+      "site_id": "AEMO-BANGOWF1",
+      "n": 26250,
+      "capacity_mw": 147.50910233750002,
+      "nmae_pct": 12.209325442604516,
+      "nrmse_pct": 17.458799130664783,
+      "r2": 0.6064758020019514,
+      "picp_pct": 79.08952380952381,
+      "smart_persistence_nmae_pct": 29.17754416615778,
+      "skill_pct": 58.155061395585946
+    },
+    {
+      "site_id": "AEMO-BANGOWF2",
+      "n": 26250,
+      "capacity_mw": 81.82403790416667,
+      "nmae_pct": 15.740490690640321,
+      "nrmse_pct": 21.876212734623948,
+      "r2": 0.4423465806787369,
+      "picp_pct": 71.76380952380951,
+      "smart_persistence_nmae_pct": 28.945135630977088,
+      "skill_pct": 45.61956491993479
+    },
+    {
+      "site_id": "AEMO-BLUFF1",
+      "n": 26250,
+      "capacity_mw": 52.5,
+      "nmae_pct": 14.243479577372806,
+      "nrmse_pct": 20.328913034572786,
+      "r2": 0.4669978022904063,
+      "picp_pct": 57.95428571428572,
+      "smart_persistence_nmae_pct": 24.812947130630345,
+      "skill_pct": 42.59658273406007
+    },
+    {
+      "site_id": "AEMO-BOCORWF1",
+      "n": 26250,
+      "capacity_mw": 113.0,
+      "nmae_pct": 22.783286155384125,
+      "nrmse_pct": 27.008402501183877,
+      "r2": 0.29685077806323734,
+      "picp_pct": 32.80380952380953,
+      "smart_persistence_nmae_pct": 32.697421224058374,
+      "skill_pct": 30.320847019518304
+    },
+    {
+      "site_id": "AEMO-BODWF1",
+      "n": 26250,
+      "capacity_mw": 113.0,
+      "nmae_pct": 11.660928939225144,
+      "nrmse_pct": 16.462245258085282,
+      "r2": 0.6252631731641596,
+      "picp_pct": 83.5657142857143,
+      "smart_persistence_nmae_pct": 26.25671355502514,
+      "skill_pct": 55.5887719352698
+    },
+    {
+      "site_id": "AEMO-BRYB1WF1",
+      "n": 26250,
+      "capacity_mw": 174.83702688333335,
+      "nmae_pct": 12.730153835640875,
+      "nrmse_pct": 17.82501309831505,
+      "r2": 0.689100637071559,
+      "picp_pct": 74.46095238095238,
+      "smart_persistence_nmae_pct": 32.01795042339043,
+      "skill_pct": 60.240572343628294
+    },
+    {
+      "site_id": "AEMO-BULGANA1",
+      "n": 26250,
+      "capacity_mw": 180.196615025,
+      "nmae_pct": 15.817440784953863,
+      "nrmse_pct": 23.896507856021316,
+      "r2": 0.054740573410180904,
+      "picp_pct": 65.11238095238096,
+      "smart_persistence_nmae_pct": 22.56837288912067,
+      "skill_pct": 29.91324247137537
+    },
+    {
+      "site_id": "AEMO-CAPTL_WF",
+      "n": 26250,
+      "capacity_mw": 140.0,
+      "nmae_pct": 15.495750131012098,
+      "nrmse_pct": 19.992348788725415,
+      "r2": 0.5730169303171868,
+      "picp_pct": 54.05333333333333,
+      "smart_persistence_nmae_pct": 28.24171694127719,
+      "skill_pct": 45.131699452861504
+    },
+    {
+      "site_id": "AEMO-CATHROCK",
+      "n": 26250,
+      "capacity_mw": 66.0,
+      "nmae_pct": 17.177418159758034,
+      "nrmse_pct": 26.713800775294498,
+      "r2": -0.25421254533358817,
+      "picp_pct": 68.8647619047619,
+      "smart_persistence_nmae_pct": 25.01199408453608,
+      "skill_pct": 31.32327593833013
+    },
+    {
+      "site_id": "AEMO-CHALLHWF",
+      "n": 26244,
+      "capacity_mw": 52.0,
+      "nmae_pct": 11.479514262418036,
+      "nrmse_pct": 16.166012155507673,
+      "r2": 0.5325687978315299,
+      "picp_pct": 82.14067977442463,
+      "smart_persistence_nmae_pct": 23.008547702097154,
+      "skill_pct": 50.10761039310745
+    }
+  ],
+  "spread": {
+    "best_nmae_pct": 11.479514262418036,
+    "median_nmae_pct": 14.869614854192452,
+    "p90_nmae_pct": 17.123084883466166,
+    "worst_nmae_pct": 22.783286155384125
+  }
+}
