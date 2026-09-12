@@ -1,12 +1,24 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-/** Scroll to top on route change. */
+/** Scroll to top on route change, or to the in-page anchor when a hash is present. */
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
+    if (hash) {
+      let el: Element | null;
+      try {
+        el = document.querySelector(hash);
+      } catch {
+        el = null;
+      }
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
     window.scrollTo({ top: 0, behavior: "auto" });
-  }, [pathname]);
+  }, [pathname, hash]);
   return null;
 }
 

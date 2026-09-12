@@ -12,14 +12,6 @@ import {
 import type { ForecastResponse } from "@/types";
 import type { DerivedDashboard } from "@/hooks/useDashboard";
 import { useDashboardContext } from "@/hooks/useDashboardContext";
-import { DecisionCallout } from "@/components/dashboard/DecisionCallout";
-import { ForecastPanel } from "@/components/charts/ForecastPanel";
-import { ForecastTable } from "@/components/dashboard/ForecastTable";
-import { BalancePanel } from "@/components/dashboard/BalancePanel";
-import { ReliabilityPanel } from "@/components/dashboard/ReliabilityPanel";
-import { SeasonalPanel } from "@/components/dashboard/SeasonalPanel";
-import { CapacityPanel } from "@/components/dashboard/CapacityPanel";
-import { InvestmentPanel } from "@/components/dashboard/InvestmentPanel";
 import { ModuleEmpty, ModulePage } from "./ModulePage";
 
 export interface ModuleDef {
@@ -42,54 +34,14 @@ export const MODULES: ModuleDef[] = [
   { to: "/dashboard/investment", label: "Investment", n: "07", Icon: CircleDollarSign, title: "Investment", meta: "scenario · not advice" },
 ];
 
-type Render = (v: { forecast: ForecastResponse; derived: DerivedDashboard }) => ReactNode;
+export type Render = (v: { forecast: ForecastResponse; derived: DerivedDashboard }) => ReactNode;
 
-function Module({ def, children }: { def: ModuleDef; children: Render }) {
-  const { result, derived, loading, error } = useDashboardContext();
+/** Shared module chrome: resolves the run state and delegates to the panel. */
+export function Module({ def, children }: { def: ModuleDef; children: Render }) {
+  const { result, derived, loading, error, run } = useDashboardContext();
   return (
     <ModulePage def={def}>
-      {result && derived ? children({ forecast: result, derived }) : <ModuleEmpty loading={loading} error={error} />}
+      {result && derived ? children({ forecast: result, derived }) : <ModuleEmpty loading={loading} error={error} onRetry={run} />}
     </ModulePage>
   );
-}
-
-export function OverviewModule() {
-  return (
-    <Module def={MODULES[0]}>
-      {({ forecast, derived }) => <DecisionCallout forecast={forecast} derived={derived} />}
-    </Module>
-  );
-}
-
-export function ForecastModule() {
-  return (
-    <Module def={MODULES[1]}>
-      {({ forecast, derived }) => (
-        <>
-          <ForecastPanel forecast={forecast} />
-          <ForecastTable forecast={forecast} balance={derived.balance} />
-        </>
-      )}
-    </Module>
-  );
-}
-
-export function BalanceModule() {
-  return <Module def={MODULES[2]}>{({ forecast, derived }) => <BalancePanel forecast={forecast} derived={derived} />}</Module>;
-}
-
-export function ReliabilityModule() {
-  return <Module def={MODULES[3]}>{({ forecast, derived }) => <ReliabilityPanel forecast={forecast} derived={derived} />}</Module>;
-}
-
-export function SeasonalModule() {
-  return <Module def={MODULES[4]}>{({ derived }) => <SeasonalPanel derived={derived} />}</Module>;
-}
-
-export function DemandModule() {
-  return <Module def={MODULES[5]}>{({ derived }) => <CapacityPanel derived={derived} />}</Module>;
-}
-
-export function InvestmentModule() {
-  return <Module def={MODULES[6]}>{({ derived }) => <InvestmentPanel derived={derived} />}</Module>;
 }

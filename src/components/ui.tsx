@@ -21,36 +21,6 @@ export function ArrowIcon() {
   );
 }
 
-export function ArrowUpRightIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 17 17 7" />
-      <path d="M7 7h10v10" />
-    </svg>
-  );
-}
-
-/** The brand wordmark: "re-forecast" with an indigo period. */
-export function Logo({ size = "md" }: { size?: "md" | "lg" }) {
-  return (
-    <span className={size === "lg" ? "brand brand--lg" : "brand"}>
-      re-forecast
-    </span>
-  );
-}
-
-/** Arrow CTA pill — used in nav + floating pill. */
-export function CtaPill({ to, children = "Talk to us" }: { to: string; children?: ReactNode }) {
-  return (
-    <Link to={to} className="btn-arrow" aria-label={String(children)}>
-      <ArrowIcon />
-      <span className="text" style={{ lineHeight: 1 }}>
-        {children}
-      </span>
-    </Link>
-  );
-}
-
 /** HUD-style pill CTA (the refined closing call-to-action). */
 export function HudButton({ to, children }: { to: string; children: ReactNode }) {
   return (

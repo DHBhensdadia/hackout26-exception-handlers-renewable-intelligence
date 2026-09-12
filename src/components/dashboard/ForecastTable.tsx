@@ -74,16 +74,21 @@ export function ForecastTable({ forecast, balance }: { forecast: ForecastRespons
         <table className="ftable">
           <thead>
             <tr>
-              <th className="ftable__time">valid time (UTC)</th>
-              <th>balance</th>
+              <th scope="col" className="ftable__time">valid time (UTC)</th>
+              <th scope="col">balance</th>
               {COLS.map((c) => (
                 <th
                   key={c.key}
+                  scope="col"
                   className={c.align === "right" ? "is-right" : undefined}
-                  onClick={() => click(c.key)}
                   aria-sort={sortKey === c.key ? (dir === 1 ? "ascending" : "descending") : "none"}
                 >
-                  {c.label} {sortKey === c.key ? (dir === 1 ? "↑" : "↓") : ""}
+                  <button type="button" className="th-sort" onClick={() => click(c.key)}>
+                    {c.label}
+                    <span className="th-sort__arrow" aria-hidden="true">
+                      {sortKey === c.key ? (dir === 1 ? "↑" : "↓") : "↕"}
+                    </span>
+                  </button>
                 </th>
               ))}
             </tr>

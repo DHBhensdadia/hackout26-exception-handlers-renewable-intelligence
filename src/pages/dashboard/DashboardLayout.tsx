@@ -1,20 +1,14 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Suspense, useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import { Menu, Play } from "lucide-react";
 import { DashboardProvider, useDashboardContext } from "@/hooks/useDashboardContext";
 import { Sidebar } from "./Sidebar";
 import { ControlsDrawer } from "./ControlsDrawer";
 
 function Shell() {
-  const { pathname } = useLocation();
   const { run, loading } = useDashboardContext();
   const [navOpen, setNavOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // Route change closes the mobile nav.
-  useEffect(() => {
-    setNavOpen(false);
-  }, [pathname]);
 
   // Lock background scroll while the off-canvas nav is open.
   useEffect(() => {
@@ -56,8 +50,17 @@ function Shell() {
           </button>
         </div>
 
-        <main className="shell__content">
-          <Outlet />
+        <main className="shell__content" id="main-content">
+          <Suspense
+            fallback={
+              <div className="module__empty" role="status" aria-live="polite">
+                <span className="module__empty-k">loading</span>
+                <p>Loading module…</p>
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
       </div>
 

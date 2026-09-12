@@ -11,12 +11,59 @@ export function ModulePage({ def, children }: { def: ModuleDef; children: ReactN
   );
 }
 
-/** Shared empty/loading state for every module. */
-export function ModuleEmpty({ loading, error }: { loading: boolean; error: string | null }) {
+function Skeleton() {
+  return (
+    <div className="module__skeleton" aria-hidden="true">
+      <div className="module__skeleton-cells">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <span key={i} className="sk sk--cell" />
+        ))}
+      </div>
+      <span className="sk sk--chart" />
+      <span className="sk sk--line" />
+      <span className="sk sk--line sk--short" />
+    </div>
+  );
+}
+
+/** Shared empty/loading/error state for every module. */
+export function ModuleEmpty({
+  loading,
+  error,
+  onRetry,
+}: {
+  loading: boolean;
+  error: string | null;
+  onRetry?: () => void;
+}) {
+  if (loading) {
+    return (
+      <div className="module__empty" role="status" aria-live="polite" aria-busy="true">
+        <span className="module__empty-k">running</span>
+        <p>Running quantile forecast models…</p>
+        <Skeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="module__empty module__empty--error" role="alert">
+        <span className="module__empty-k">error</span>
+        <p>{error}</p>
+        {onRetry && (
+          <button type="button" className="btn btn--sm" onClick={onRetry}>
+            Retry forecast
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="module__empty" role="status">
-      <span className="module__empty-k">{error ? "error" : loading ? "running" : "idle"}</span>
-      <p>{error ?? (loading ? "Running quantile forecast models…" : "Configure inputs and run a forecast.")}</p>
+      <span className="module__empty-k">idle</span>
+      <p>Configure inputs and run a forecast.</p>
     </div>
   );
 }

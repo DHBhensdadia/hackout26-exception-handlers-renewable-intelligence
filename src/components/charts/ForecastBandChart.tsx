@@ -1,17 +1,10 @@
 import { useId, useState } from "react";
 import type { HourPoint } from "@/types";
+import { hourLabel } from "@/lib/derive";
 import { useMeasure } from "@/hooks/useMeasure";
 
 const fmtMw = (v: number) => (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2));
 const fmtTick = (v: number) => (Number.isInteger(v) ? v.toFixed(0) : v.toFixed(1));
-
-/** Pretty print an hour label like 2026-09-12T14:00:00Z -> "12 Sep 14:00 UTC". */
-export function hourLabel(iso: string) {
-  const d = new Date(iso);
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${d.getUTCDate()} ${d.toLocaleString("en", { month: "short" })} ${hh}:${mm} UTC`;
-}
 
 /** Round a value up to a clean axis maximum (1 / 1.2 / 1.5 / 2 / 2.5 / … × 10ⁿ). */
 function niceMax(v: number) {

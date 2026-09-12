@@ -76,7 +76,7 @@ export function computeBalance(forecast: ForecastResponse, site: SiteRecord, sto
     const d = demand[i];
     const net = round(gen - d, 2);
 
-    let action: BalanceHour["action"] = "hold";
+    let action: BalanceHour["action"];
     let stored = 0;
     let curtailed = 0;
     let unmet = 0;

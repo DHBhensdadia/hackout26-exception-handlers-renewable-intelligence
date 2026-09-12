@@ -16,27 +16,25 @@ export function Reveal({
   style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [inView, setInView] = useState(false);
+  // Fall back to visible immediately when IntersectionObserver is unavailable.
+  const [inView, setInView] = useState(() => typeof window !== "undefined" && !("IntersectionObserver" in window));
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              setInView(true);
-              io.unobserve(e.target);
-            }
-          });
-        },
-        { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
-      );
-      io.observe(el);
-      return () => io.disconnect();
-    }
-    setInView(true);
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            setInView(true);
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   return (

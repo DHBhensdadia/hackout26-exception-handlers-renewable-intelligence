@@ -55,10 +55,3 @@ export interface SiteRecord {
   in_training_data: boolean;
 }
 
-export type SiteTechnology = "solar" | "wind";
-
-/** Demand profile used by the balance analysis (hourly expected demand vs generation). */
-export interface DemandHour {
-  hour: number;
-  demand_mw: number;
-}

@@ -1,6 +1,6 @@
+import { hash01 } from "@/lib/derive/util";
 import type {
   ColdStartForecastRequest,
-  DemandHour,
   ForecastRequest,
   ForecastResponse,
   HourPoint,
@@ -31,7 +31,7 @@ function mulberry32(a: number) {
 }
 
 /** Fixed list of registered sites (stands in for GET /sites). */
-export const MOCK_SITES: SiteRecord[] = [
+const MOCK_SITES: SiteRecord[] = [
   { site_id: "GJ-SOLAR-CHARANKA", name: "Charanka Solar Park", latitude: 23.03, longitude: 72.57, tech: "solar", capacity_mw: 50, region: "Gujarat", in_training_data: true },
   { site_id: "RJ-SOLAR-BHADLA", name: "Bhadla Solar Park", latitude: 27.5, longitude: 71.92, tech: "solar", capacity_mw: 120, region: "Rajasthan", in_training_data: true },
   { site_id: "TN-WIND-KAYATHAR", name: "Kayathar Wind Farm", latitude: 8.7, longitude: 77.7, tech: "wind", capacity_mw: 73, region: "Tamil Nadu", in_training_data: true },
@@ -44,22 +44,6 @@ export const MOCK_SITES: SiteRecord[] = [
 
 function pick<T>(arr: T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)];
-}
-
-/* ----- Demand profile (24 h profile repeated across the horizon) ----- */
-const DEMAND_CURVE = [38, 36, 35, 34, 33, 33, 34, 37, 42, 48, 53, 56, 58, 57, 55, 54, 53, 52, 50, 47, 44, 42, 40, 39];
-
-/** Build a deterministic hourly demand curve scaled around a site's rating. */
-export function demandSeries(capacity_mw: number, hours: number, rng: () => number): DemandHour[] {
-  const scale = 0.75 + rng() * 0.5;
-  const base = capacity_mw * scale * 0.55;
-  const result: DemandHour[] = [];
-  for (let h = 0; h < hours; h++) {
-    const wave = DEMAND_CURVE[h % 24];
-    const jitter = 0.92 + rng() * 0.16;
-    result.push({ hour: h, demand_mw: Math.round(base * (wave / 50) * jitter * 10) / 10 });
-  }
-  return result;
 }
 
 interface SolarProfile {
@@ -184,15 +168,43 @@ function runForecast(
   };
 }
 
+/** Simulate a little network latency and honour the caller's abort signal. */
+function simulateLatency(signal?: AbortSignal, ms = 220): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    function onAbort() {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    }
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+/** Stable seed so the same request always yields the same shape. */
+function seedFor(req: unknown): number {
+  return Math.floor(hash01(JSON.stringify(req)) * 0xffffffff) >>> 0;
+}
+
 /** Public mock API surface. */
 export const mockApi = {
-  async listSites(): Promise<SiteRecord[]> {
+  async listSites(signal?: AbortSignal): Promise<SiteRecord[]> {
+    await simulateLatency(signal, 120);
     return MOCK_SITES.map((s) => ({ ...s }));
   },
 
-  async forecast(req: ForecastRequest & { capacity_mw: number; tech: Tech }): Promise<ForecastResponse> {
-    const seed = Math.floor(Math.random() * 1e9);
-    const rng = mulberry32(seed);
+  async forecast(
+    req: ForecastRequest & { capacity_mw: number; tech: Tech },
+    signal?: AbortSignal
+  ): Promise<ForecastResponse> {
+    await simulateLatency(signal);
+    const rng = mulberry32(seedFor(req));
     const { points, envelope } = runForecast(req, rng);
 
     return {

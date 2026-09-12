@@ -5,7 +5,7 @@ export function SiteFooter() {
   return (
     <footer className="footer">
       <div className="wrap">
-        <div className="footer__top">
+        <div className="footer__top reveal">
           <div className="footer__brand">
             <Link to="/" className="brand">
               re-forecast
@@ -39,14 +39,14 @@ export function SiteFooter() {
             <h4>Product</h4>
             <Link to="/dashboard">Forecast Dashboard</Link>
             <Link to="/dashboard">Site Registry</Link>
-            <Link to="#modules">Models</Link>
-            <Link to="#manifesto">Principle</Link>
+            <Link to="/#modules">Models</Link>
+            <Link to="/#manifesto">Principle</Link>
           </div>
           <div className="footer__col">
             <h4>Platform</h4>
-            <Link to="#horizons">Planning Horizons</Link>
-            <Link to="#modules">Seven Modules</Link>
-            <Link to="#mvp">Build Runway</Link>
+            <Link to="/#horizons">Planning Horizons</Link>
+            <Link to="/#modules">Seven Modules</Link>
+            <Link to="/#mvp">Build Runway</Link>
           </div>
           <div className="footer__col">
             <h4>Company</h4>
@@ -56,7 +56,7 @@ export function SiteFooter() {
             <Link to="/#cta">Contact</Link>
           </div>
         </div>
-        <div className="footer__bottom">
+        <div className="footer__bottom reveal">
           <span>
             © {year} re-forecast — renewable energy intelligence platform
           </span>

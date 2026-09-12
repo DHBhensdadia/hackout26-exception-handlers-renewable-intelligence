@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useScrollBehaviour } from "../components/Shell";
 import { SiteHeader } from "../components/SiteNav";
 import { SiteFooter } from "../components/SiteFooter";
+import { ScrollProgress } from "../components/ScrollProgress";
 import { CtaBand } from "../components/CtaBand";
 import { Reveal } from "../components/Reveal";
 import { HeroConsole } from "../components/HeroConsole";
 import { Button } from "../components/ui";
+import { stagger } from "@/lib/style";
 
 const FLOW = [
   { n: "01", t: "Data", d: "Weather, historical generation, equipment, demand, economic and demographic signals." },
@@ -126,9 +128,9 @@ const PHASES = [
   },
 ];
 
-function PhaseBlock({ p }: { p: (typeof PHASES)[number] }) {
+function PhaseBlock({ p, i }: { p: (typeof PHASES)[number]; i: number }) {
   return (
-    <article className="runway__phase">
+    <article className="runway__phase" style={stagger(i)}>
       <div className="runway__meta">
         <span className="idx">{p.phase}</span>
         {p.scope === "now" && <span className="pill pill--ok">live</span>}
@@ -149,8 +151,13 @@ export default function Landing() {
 
   return (
     <>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <ScrollProgress />
       <SiteHeader />
 
+      <main id="main-content">
       {/* ============ HERO ============ */}
       <section className="hero hero--app" id="top">
         <div className="hero__shader" />
@@ -176,8 +183,8 @@ export default function Landing() {
           </div>
 
           {/* Spec strip of core capability numbers */}
-          <div className="specstrip reveal d2">
-            <div className="cell">
+          <div className="specstrip reveal reveal--stagger d2">
+            <div className="cell" style={stagger(0)}>
               <span className="eyebrow">Forecast horizon</span>
               <div className="num"><em>24–72</em> h</div>
               <div className="lbl">Three days ahead, issued hourly</div>
@@ -192,7 +199,7 @@ export default function Landing() {
                 <li>Uncertainty bands</li>
               </ul>
             </div>
-            <div className="cell">
+            <div className="cell" style={stagger(1)}>
               <span className="eyebrow">Technologies modelled</span>
               <div className="num"><em>solar</em> + <em>wind</em></div>
               <div className="lbl">Site-calibrated, technology-specific models</div>
@@ -214,7 +221,7 @@ export default function Landing() {
       {/* ============ HERO CONSOLE ============ */}
       <section style={{ position: "relative", paddingBottom: "var(--section)" }}>
         <div className="wrap">
-          <Reveal className="load s4" style={{ position: "relative" }}>
+          <Reveal className="reveal--console" style={{ position: "relative" }}>
             <HeroConsole />
           </Reveal>
         </div>
@@ -223,7 +230,7 @@ export default function Landing() {
       {/* ============ CORE PRINCIPLE ============ */}
       <section className="section" id="manifesto">
         <div className="wrap">
-          <Reveal>
+          <Reveal className="reveal--stagger">
             <div className="principle">
               <header className="principle__head">
                 <span className="eyebrow">The core principle</span>
@@ -234,7 +241,7 @@ export default function Landing() {
               </header>
               <ol className="principle__chain">
                 {PRINCIPLE.map((s, i) => (
-                  <li key={s.n} className="principle__step">
+                  <li key={s.n} className="principle__step" style={stagger(i)}>
                     <span className="principle__idx">{s.n}</span>
                     <h3 className="principle__title">{s.t}</h3>
                     <p className="principle__body">{s.d}</p>
@@ -264,10 +271,10 @@ export default function Landing() {
               </p>
             </div>
           </Reveal>
-          <Reveal>
-            <div className="grid grid--7" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
-              {FLOW.map((s) => (
-                <div key={s.n} className="card" style={{ padding: "1.3rem 1.1rem", gap: ".7rem" }}>
+          <Reveal className="reveal--stagger">
+            <div className="grid grid--7">
+              {FLOW.map((s, i) => (
+                <div key={s.n} className="card" style={stagger(i, { padding: "1.3rem 1.1rem", gap: ".7rem" })}>
                   <span className="idx">{s.n}</span>
                   <h3 style={{ fontSize: "1.05rem" }}>{s.t}</h3>
                   <p style={{ fontSize: ".85rem", lineHeight: 1.5 }}>{s.d}</p>
@@ -287,10 +294,10 @@ export default function Landing() {
               <h2 className="h2">Short-term operations. Seasonal reliability. Long-term investment.</h2>
             </div>
           </Reveal>
-          <Reveal>
+          <Reveal className="reveal--stagger">
             <div className="grid grid--3">
-              {HORIZONS.map((h) => (
-                <div key={h.tag} className="card">
+              {HORIZONS.map((h, i) => (
+                <div key={h.tag} className="card" style={stagger(i)}>
                   <span className="chip chip--solid" style={{ alignSelf: "flex-start" }}>{h.tag}</span>
                   <h3>{h.title}</h3>
                   <p>{h.body}</p>
@@ -310,12 +317,12 @@ export default function Landing() {
               <h2 className="h2">Four practical questions, one connected system.</h2>
             </div>
           </Reveal>
-          <Reveal>
+          <Reveal className="reveal--stagger">
             <div className="qa">
               {QUESTIONS.map((item, i) => {
                 const open = openQ === i;
                 return (
-                  <div key={item.q} className={open ? "qa__item qa__item--open" : "qa__item"}>
+                  <div key={item.q} className={open ? "qa__item qa__item--open" : "qa__item"} style={stagger(i)}>
                     <button
                       type="button"
                       className="qa__head"
@@ -355,12 +362,13 @@ export default function Landing() {
               </p>
             </div>
           </Reveal>
-          <Reveal>
+          <Reveal className="reveal--stagger">
             <div className="grid grid--3 modules">
               {MODULES.map((m, i) => (
                 <div
                   key={m.id}
                   className={i === MODULES.length - 1 ? "card card--wide" : "card"}
+                  style={stagger(i)}
                 >
                   <span className="idx">{m.id}</span>
                   <h3>{m.name}</h3>
@@ -381,21 +389,21 @@ export default function Landing() {
               <h2 className="h2">Three phases, one forecasting core.</h2>
             </div>
           </Reveal>
-          <Reveal>
+          <Reveal className="reveal--stagger">
             <div className="runway">
-              <div className="runway__scope runway__scope--now">
+              <div className="runway__scope runway__scope--now" style={stagger(0)}>
                 <span className="runway__dot runway__dot--now" />
                 Current scope
               </div>
-              {PHASES.filter((p) => p.scope === "now").map((p) => (
-                <PhaseBlock key={p.phase} p={p} />
+              {PHASES.filter((p) => p.scope === "now").map((p, i) => (
+                <PhaseBlock key={p.phase} p={p} i={i + 1} />
               ))}
-              <div className="runway__scope runway__scope--next">
+              <div className="runway__scope runway__scope--next" style={stagger(2)}>
                 <span className="runway__dot" />
                 Future scope
               </div>
-              {PHASES.filter((p) => p.scope === "next").map((p) => (
-                <PhaseBlock key={p.phase} p={p} />
+              {PHASES.filter((p) => p.scope === "next").map((p, i) => (
+                <PhaseBlock key={p.phase} p={p} i={i + 3} />
               ))}
               <span className="runway__rule runway__rule--a" aria-hidden="true" />
               <span className="runway__rule runway__rule--b" aria-hidden="true" />
@@ -406,6 +414,7 @@ export default function Landing() {
 
       {/* ============ CTA ============ */}
       <CtaBand />
+      </main>
 
       <SiteFooter />
     </>

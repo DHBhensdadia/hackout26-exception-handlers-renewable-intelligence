@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { forecast, listSites } from "@/api/client";
+import { forecast, isAbortError, listSites } from "@/api/client";
 import { config } from "@/config";
 import type { ForecastResponse, SiteRecord } from "@/types";
-import { toJson, toRequest, type DashboardForm } from "@/components/dashboard/ControlsPanel";
+import { toJson, toRequest, type DashboardForm } from "@/lib/dashboardForm";
 import {
   capacityModel,
   computeBalance,
@@ -42,6 +42,7 @@ function coldSite(form: DashboardForm, id?: string, tech?: SiteRecord["tech"], c
 /**
  * One orchestration hook for the decision console: registry, form state, the
  * forecast run, and the deterministic derived models that consume it.
+ * In-flight runs are cancelled so a stale response can never overwrite a newer one.
  */
 export function useDashboard() {
   const [sites, setSites] = useState<SiteRecord[]>([]);
@@ -58,16 +59,27 @@ export function useDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const booted = useRef(false);
+  const runCtrl = useRef<AbortController | null>(null);
 
   const patch = useCallback((p: Partial<DashboardForm>) => setForm((f) => ({ ...f, ...p })), []);
 
   const runWith = useCallback((f: DashboardForm) => {
+    runCtrl.current?.abort();
+    const ctrl = new AbortController();
+    runCtrl.current = ctrl;
+
     setLoading(true);
     setError(null);
-    forecast(toRequest(f))
-      .then(setResult)
-      .catch((e: Error) => setError(e.message || "Forecast failed."))
-      .finally(() => setLoading(false));
+    forecast(toRequest(f), ctrl.signal)
+      .then((res) => {
+        if (!ctrl.signal.aborted) setResult(res);
+      })
+      .catch((e: unknown) => {
+        if (!isAbortError(e)) setError(e instanceof Error ? e.message : "Forecast failed.");
+      })
+      .finally(() => {
+        if (runCtrl.current === ctrl) setLoading(false);
+      });
   }, []);
 
   const run = useCallback(() => runWith(form), [form, runWith]);
@@ -90,17 +102,13 @@ export function useDashboard() {
   );
 
   useEffect(() => {
-    let active = true;
-    listSites()
-      .then((s) => {
-        if (active) setSites(s);
-      })
-      .catch(() => {
-        if (active) setError("Could not load the site registry.");
+    const ctrl = new AbortController();
+    listSites(ctrl.signal)
+      .then(setSites)
+      .catch((e: unknown) => {
+        if (!isAbortError(e)) setError("Could not load the site registry.");
       });
-    return () => {
-      active = false;
-    };
+    return () => ctrl.abort();
   }, []);
 
   // First run once the registry arrives, so the console is never blank.
@@ -111,6 +119,9 @@ export function useDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sites.length]);
+
+  // Cancel any in-flight run when the console unmounts.
+  useEffect(() => () => runCtrl.current?.abort(), []);
 
   /** The site record aligned to the last run (capacity/tech from the response). */
   const site = useMemo<SiteRecord | null>(() => {
