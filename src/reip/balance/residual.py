@@ -295,10 +295,14 @@ def event_runs(frame: pd.DataFrame, column: str, threshold: float = 0.5) -> list
 def _run(frame: pd.DataFrame, start: int, end: int, column: str) -> dict:
     kind = "surplus" if "surplus" in column else "shortage"
     block = frame.iloc[start:end]
+    # ISO-8601 with a Z suffix, matching every other timestamp the API emits. Consistency
+    # here is not cosmetic: a consumer parsing two formats from one payload will get one of
+    # them wrong eventually.
+    stamps = pd.DatetimeIndex(block["valid_time_utc"]).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "kind": kind,
-        "from_utc": str(block["valid_time_utc"].iloc[0]),
-        "to_utc": str(block["valid_time_utc"].iloc[-1]),
+        "from_utc": stamps[0],
+        "to_utc": stamps[-1],
         "hours": int(end - start),
         "peak_probability": round(float(block[column].max()), 3),
         "energy_mwh": round(float(block[f"expected_{kind}_mwh"].sum()), 1),
