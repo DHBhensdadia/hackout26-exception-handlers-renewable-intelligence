@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/global.css";
+import "./styles/dashboard.css";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import { ScrollToTop } from "@/components/Shell";
