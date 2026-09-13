@@ -1,13 +1,12 @@
 import type { ReactNode } from "react";
-import { Section } from "@/components/dashboard/Section";
 import type { ModuleDef } from "./modules";
 
-/** One module page: §-numbered header (as the page h1) + ruled body. */
+/** One module page. The appwin bar carries the title, so the body starts at the content. */
 export function ModulePage({ def, children }: { def: ModuleDef; children: ReactNode }) {
   return (
-    <Section id={`mod-${def.n}`} index={def.n} title={def.title} meta={def.meta} titleAs="h1">
-      <div className="module__flow">{children}</div>
-    </Section>
+    <div className="module" data-module={def.n}>
+      {children}
+    </div>
   );
 }
 
