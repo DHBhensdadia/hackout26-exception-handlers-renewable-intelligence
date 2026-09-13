@@ -1,0 +1,31 @@
+# Exported by three-d-stage
+newmtl MAT_Concrete
+Kd 0.3325 0.3419 0.3231
+Ks 0.2000 0.2000 0.2000
+Ns 24
+d 1.0000
+
+newmtl MAT_Tower_Paint
+Kd 0.8148 0.8308 0.8148
+Ks 0.2000 0.2000 0.2000
+Ns 96
+d 1.0000
+
+newmtl MAT_Metal_Trim
+Kd 0.1651 0.1878 0.2016
+Ks 0.2000 0.2000 0.2000
+Ns 124
+d 1.0000
+
+newmtl MAT_Nacelle
+Kd 0.7758 0.7991 0.7835
+Ks 0.2000 0.2000 0.2000
+Ns 112
+d 1.0000
+
+newmtl MAT_Blade
+Kd 0.8963 0.9047 0.8879
+Ks 0.2000 0.2000 0.2000
+Ns 132
+d 1.0000
+

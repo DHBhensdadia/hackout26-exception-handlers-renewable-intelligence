@@ -12,11 +12,9 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 import type { ForecastResponse, SiteRecord } from "@/types";
-import { capacityModel } from "./capacity";
 import { computeBalance } from "./balance";
 import { investmentScenarios } from "./investment";
 import { reliabilityModel } from "./reliability";
-import { seasonalPattern } from "./seasonal";
 import { storageModel } from "./storage";
 import { invariantViolations } from "./verify";
 
@@ -51,11 +49,12 @@ beforeAll(async () => {
 function deriveEverything(forecast: ForecastResponse, site: SiteRecord) {
   const storage = storageModel(site);
   const balance = computeBalance(forecast, site, storage);
-  const capacity = capacityModel(forecast, site);
   const reliability = reliabilityModel(forecast, site);
-  const seasonal = seasonalPattern(site);
   const scenarios = investmentScenarios(500, site);
-  return { storage, balance, capacity, reliability, seasonal, scenarios };
+  // capacity.ts was folded into demand.ts and seasonalPattern became seasonalCells during
+  // the console refactor; both now take a RegionRecord rather than a SiteRecord, so they
+  // are covered by their own tests instead of this one.
+  return { storage, balance, reliability, scenarios };
 }
 
 function nonFinite(value: unknown, path = "root"): string[] {
@@ -155,7 +154,6 @@ describe("derived layer against the live API", () => {
       expect(typeof site.in_training_data).toBe("boolean");
       expect(Number.isFinite(site.capacity_mw)).toBe(true);
       expect(nonFinite(storageModel(site))).toEqual([]);
-      expect(nonFinite(seasonalPattern(site))).toEqual([]);
       expect(nonFinite(investmentScenarios(500, site))).toEqual([]);
     }
   });

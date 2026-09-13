@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { ForecastResponse, HourPoint, SiteRecord } from "@/types";
+import type { ForecastResponse, HourPoint, RegionRecord, SiteRecord } from "@/types";
 import {
-  capacityModel,
   computeBalance,
+  demandBand,
   hash01,
   invariantViolations,
   investmentScenarios,
   reliabilityModel,
-  seasonalPattern,
+  seasonalCells,
   storageModel,
+  summarizeDemand,
+  summarizeSeasonal,
 } from "./index";
 
 const site: SiteRecord = {
@@ -123,12 +125,62 @@ describe("investmentScenarios", () => {
   });
 });
 
-describe("seasonalPattern & capacityModel", () => {
-  it("produces twelve months and scored years", () => {
-    expect(seasonalPattern(site).months).toHaveLength(12);
-    const cap = capacityModel(makeForecast(24), site);
-    expect(cap.years).toHaveLength(5);
-    expect(cap.years[0].year).toBe(2026);
+describe("regional demand", () => {
+  const region: RegionRecord = {
+    region_id: "SA1",
+    name: "South Australia",
+    nmae_pct: 3.17,
+    coverage_pct: 84.6,
+    balance_available: true,
+    headroom_mw: 1610,
+  };
+  const issue = new Date(Date.UTC(2026, 0, 1, 0, 0, 0));
+  const demand = summarizeDemand(demandBand(region, issue, 72), region, 2026);
+
+  it("keeps p10 <= p50 <= p90 across the horizon", () => {
+    expect(demand.points).toHaveLength(72);
+    for (const p of demand.points) {
+      expect(p.p10_mw).toBeLessThanOrEqual(p.p50_mw);
+      expect(p.p50_mw).toBeLessThanOrEqual(p.p90_mw);
+      expect(p.p10_mw).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("carries the region's measured accuracy and a headroom read", () => {
+    expect(demand.nmae_pct).toBe(3.17);
+    expect(demand.headroom_mw).toBe(1610);
+    expect(demand.peak.p50_mw).toBeGreaterThan(0);
+    expect(demand.plan.years).toHaveLength(5);
+    expect(demand.renewable_band).toHaveLength(72);
+  });
+});
+
+describe("seasonal grid", () => {
+  const region: RegionRecord = {
+    region_id: "SA1",
+    name: "South Australia",
+    nmae_pct: 3.17,
+    coverage_pct: 84.6,
+    balance_available: true,
+    headroom_mw: 1610,
+  };
+  const grid = summarizeSeasonal(seasonalCells(region));
+
+  it("is exactly 12 x 24 and deterministic", () => {
+    expect(grid.cells).toHaveLength(288);
+    expect(new Set(grid.cells.map((c) => `${c.month}-${c.hour}`)).size).toBe(288);
+    expect(grid.months).toHaveLength(12);
+    expect(seasonalCells(region).cells[0].residual_mwh).toBe(grid.cells[0].residual_mwh);
+  });
+
+  it("binds surplus share and storage to sane ranges", () => {
+    for (const c of grid.cells) {
+      expect(c.surplus_pct).toBeGreaterThanOrEqual(0);
+      expect(c.surplus_pct).toBeLessThanOrEqual(1);
+    }
+    expect(grid.storage_to_absorb_mwh).toBeGreaterThanOrEqual(0);
+    expect(grid.recurring_surplus_hours).toBeGreaterThanOrEqual(0);
+    expect(grid.peak.residual_mwh).toBe(Math.max(...grid.cells.map((c) => c.residual_mwh)));
   });
 });
 

@@ -5,7 +5,10 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "coverage", ".vite", "coverage"] },
+  // Union of both sides: ".vite" is Vite's dependency pre-bundle cache, which eslint was
+  // linting and failing on rules that do not apply to generated code; "Refrence" is the
+  // read-only research folder.
+  { ignores: ["dist", "node_modules", "coverage", ".vite", "Refrence"] },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

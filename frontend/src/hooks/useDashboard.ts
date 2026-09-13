@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { forecast, isAbortError, listSites } from "@/api/client";
+import { demandForRegion, forecast, isAbortError, listRegions, listSites } from "@/api/client";
 import { config } from "@/config";
-import type { ForecastResponse, SiteRecord } from "@/types";
+import type { ForecastResponse, RegionRecord, SiteRecord } from "@/types";
 import { toJson, toRequest, type DashboardForm } from "@/lib/dashboardForm";
 import {
-  capacityModel,
   computeBalance,
   invariantViolations,
   reliabilityModel,
-  seasonalPattern,
+  seasonalCells,
   storageModel,
+  summarizeSeasonal,
   type BalanceResult,
-  type CapacityResult,
+  type DemandResult,
   type ReliabilityResult,
   type SeasonalResult,
   type StorageModel,
@@ -22,9 +22,9 @@ export interface DerivedDashboard {
   storage: StorageModel;
   balance: BalanceResult;
   reliability: ReliabilityResult;
-  seasonal: SeasonalResult;
-  capacity: CapacityResult;
 }
+
+const DEFAULT_REGION = "SA1";
 
 function coldSite(form: DashboardForm, id?: string, tech?: SiteRecord["tech"], capacity?: number): SiteRecord {
   return {
@@ -41,11 +41,21 @@ function coldSite(form: DashboardForm, id?: string, tech?: SiteRecord["tech"], c
 
 /**
  * One orchestration hook for the decision console: registry, form state, the
- * forecast run, and the deterministic derived models that consume it.
- * In-flight runs are cancelled so a stale response can never overwrite a newer one.
+ * forecast run, the regional demand model, and the deterministic derived
+ * models that consume them.
+ * In-flight requests are cancelled so a stale response can never overwrite a
+ * newer one.
  */
 export function useDashboard() {
   const [sites, setSites] = useState<SiteRecord[]>([]);
+  const [regions, setRegions] = useState<RegionRecord[]>([]);
+  const [regionId, setRegionId] = useState<string>(DEFAULT_REGION);
+  const [regionError, setRegionError] = useState<string | null>(null);
+  const [demandState, setDemandState] = useState<{
+    key: string | null;
+    data: DemandResult | null;
+    error: string | null;
+  }>({ key: null, data: null, error: null });
   const [form, setForm] = useState<DashboardForm>({
     mode: "site",
     site_id: "GJ-SOLAR-CHARANKA",
@@ -111,6 +121,58 @@ export function useDashboard() {
     return () => ctrl.abort();
   }, []);
 
+  useEffect(() => {
+    const ctrl = new AbortController();
+    listRegions(ctrl.signal)
+      .then((list) => {
+        setRegions(list);
+        setRegionId((id) => (list.some((r) => r.region_id === id) ? id : (list[0]?.region_id ?? id)));
+      })
+      .catch((e: unknown) => {
+        if (!isAbortError(e)) setRegionError("Could not load the regional registry.");
+      });
+    return () => ctrl.abort();
+  }, []);
+
+  const region = useMemo(
+    () => regions.find((r) => r.region_id === regionId) ?? regions[0] ?? null,
+    [regions, regionId]
+  );
+
+  // Demand follows the selected region and horizon (not the site selection).
+  // State is keyed by request so loading is derived, never set synchronously.
+  useEffect(() => {
+    if (!region) return;
+    const ctrl = new AbortController();
+    const key = `${region.region_id}:${form.horizon_h}`;
+    demandForRegion(region, form.horizon_h, ctrl.signal)
+      .then((data) => {
+        if (!ctrl.signal.aborted) setDemandState({ key, data, error: null });
+      })
+      .catch((e: unknown) => {
+        if (!isAbortError(e)) {
+          setDemandState((s) => ({
+            key,
+            data: s.data,
+            error: e instanceof Error ? e.message : "Regional demand unavailable.",
+          }));
+        }
+      });
+    return () => ctrl.abort();
+  }, [region, form.horizon_h]);
+
+  const demandKey = region ? `${region.region_id}:${form.horizon_h}` : null;
+  const demandCurrent = demandState.key === demandKey ? demandState : null;
+  const demand = demandCurrent?.data ?? null;
+  const demandError = demandCurrent?.error ?? regionError;
+  const demandLoading = !!region && !demandCurrent;
+
+  /** Seasonal is a client-side computation over the regional climatology. */
+  const seasonal = useMemo<SeasonalResult | null>(
+    () => (region ? summarizeSeasonal(seasonalCells(region)) : null),
+    [region]
+  );
+
   // First run once the registry arrives, so the console is never blank.
   useEffect(() => {
     if (!booted.current && sites.length) {
@@ -143,8 +205,6 @@ export function useDashboard() {
       storage,
       balance: computeBalance(result, site, storage),
       reliability: reliabilityModel(result, site),
-      seasonal: seasonalPattern(site),
-      capacity: capacityModel(result, site),
     };
   }, [result, site]);
 
@@ -157,7 +217,28 @@ export function useDashboard() {
     if (violations.length) console.warn("[derive] invariant violations:", violations);
   }, [result, derived]);
 
-  // `site` is exposed so panels that talk to the backend directly - the regional balance -
-  // can read the selected site's market region without recomputing the resolution logic.
-  return { sites, site, form, patch, run, pickSite, result, loading, error, derived, jsonPreview };
+  // `site` is added to their return rather than replacing it: panels that talk to the
+  // backend directly - the regional balance - read the selected site's market region from
+  // it, and recomputing that resolution logic in each panel would let the two drift.
+  return {
+    sites,
+    site,
+    regions,
+    region,
+    regionId,
+    setRegionId,
+    demand,
+    demandLoading,
+    demandError,
+    seasonal,
+    form,
+    patch,
+    run,
+    pickSite,
+    result,
+    loading,
+    error,
+    derived,
+    jsonPreview,
+  };
 }

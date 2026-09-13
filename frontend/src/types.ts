@@ -55,6 +55,56 @@ export interface SiteRecord {
   in_training_data: boolean;
 }
 
+/** GET /regions — metadata for the regional demand model (measured accuracy). */
+export interface RegionRecord {
+  region_id: string;
+  name: string;
+  nmae_pct: number;
+  coverage_pct: number;
+  balance_available: boolean;
+  caveat?: string;
+  /** Dispatchable headroom, MW — the ceiling above which coverage is scarce. */
+  headroom_mw: number;
+}
+
+/** POST /demand — one hour of a regional demand band. */
+export interface DemandPoint {
+  valid_time_utc: string;
+  horizon_h: number;
+  p10_mw: number;
+  p50_mw: number;
+  p90_mw: number;
+}
+
+/** POST /demand response (docs/api-contract.md semantics). */
+export interface DemandResponse {
+  region_id: string;
+  data_mode: "replay" | "live";
+  model_version: string;
+  nmae_pct: number;
+  coverage_pct: number;
+  points: DemandPoint[];
+  /** "api" when served by the backend, "modelled" when computed locally. */
+  source: "api" | "modelled";
+}
+
+/** One month x hour cell of the seasonal climatology. */
+export interface SeasonalCell {
+  month: number;
+  hour: number;
+  residual_mwh: number;
+  surplus_pct: number;
+}
+
+/** GET /seasonal/{region} response (endpoint currently cut). */
+export interface SeasonalResponse {
+  region_id: string;
+  window_years: number;
+  source: string;
+  cells: SeasonalCell[];
+  storage_to_absorb_mwh: number;
+}
+
 
 /* ------------------------------------------------------------------ /balance */
 
@@ -129,10 +179,11 @@ export interface BalanceResponse {
   actual: BalanceActual[];
 }
 
-/** GET /regions — one market region. */
-export interface RegionRecord {
+/** GET /regions — installed capacity per market region, as the backend serves it. */
+export interface RegionCapacity {
   region: string;
   technologies: Record<string, { sites: number; capacity_mw: number }>;
   total_capacity_mw: number;
   balance_available: boolean;
 }
+

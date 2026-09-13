@@ -1,3 +1,4 @@
+import { ArrowLeftRight, CircleDollarSign, ShieldCheck, Sparkles, Target, Zap } from "lucide-react";
 import { stagger } from "@/lib/style";
 
 const STATS: [string, string][] = [
@@ -7,9 +8,16 @@ const STATS: [string, string][] = [
   ["80 % band", "7.2–27.7"],
 ];
 
-const BARS: [number, number][] = [
-  [12, 30], [18, 40], [26, 50], [34, 62], [42, 70], [34, 60], [24, 45], [16, 32],
-  [10, 26], [6, 18], [4, 12], [2, 8], [1, 4], [1, 3], [1, 2], [1, 2],
+/** Thirteen hourly checkpoints across the 72 h horizon. */
+const TICKS = Array.from({ length: 13 }, (_, i) => (i === 0 ? "now" : `+${i * 6}h`));
+
+/** Surplus / shortage windows drawn on the rail, in tick units (0–12). */
+const SEGMENTS: { tone: "ok" | "warn"; start: number; end: number }[] = [
+  { tone: "ok", start: 0, end: 2 },
+  { tone: "warn", start: 4, end: 5 },
+  { tone: "ok", start: 6, end: 8 },
+  { tone: "warn", start: 9, end: 10 },
+  { tone: "ok", start: 11, end: 12 },
 ];
 
 const PILLS: { cls: string; label: string }[] = [
@@ -38,12 +46,12 @@ export function HeroConsole() {
         </div>
         <div className="appwin__grp">Modules</div>
         <nav className="appwin__nav">
-          <span className="on"><span className="em">◎</span> Forecast</span>
-          <span><span className="em">⇄</span> Balance</span>
-          <span><span className="em">◔</span> Reliability</span>
-          <span><span className="em">◎</span> Investment</span>
-          <span><span className="em">◎</span> Demand</span>
-          <span><span className="em">◈</span> Optimize</span>
+          <span className="on"><span className="em"><Target className="ic" aria-hidden="true" /></span> Forecast</span>
+          <span><span className="em"><ArrowLeftRight className="ic" aria-hidden="true" /></span> Balance</span>
+          <span><span className="em"><ShieldCheck className="ic" aria-hidden="true" /></span> Reliability</span>
+          <span><span className="em"><CircleDollarSign className="ic" aria-hidden="true" /></span> Investment</span>
+          <span><span className="em"><Zap className="ic" aria-hidden="true" /></span> Demand</span>
+          <span><span className="em"><Sparkles className="ic" aria-hidden="true" /></span> Optimize</span>
         </nav>
       </aside>
 
@@ -63,16 +71,25 @@ export function HeroConsole() {
             ))}
           </div>
 
-          <div className="appwin__chart">
-            {BARS.map(([lo, hi], i) => (
-              <div key={i} className="appwin__bar-col" style={stagger(i)}>
-                <div className="appwin__bar-fill" style={{ bottom: `${lo}%`, top: `${100 - hi}%` }} />
-                <div className="appwin__bar-line" style={{ bottom: `${lo}%` }} />
-              </div>
-            ))}
-          </div>
-          <div className="appwin__axis">
-            <span>now +6h +12h +18h +24h +30h +36h +42h +48h +54h +60h +66h +72h</span>
+          <div className="hc-line">
+            <div className="hc-line__rail">
+              <span className="hc-line__now" />
+              {SEGMENTS.map((s, i) => (
+                <span
+                  key={i}
+                  className={`hc-line__seg hc-line__seg--${s.tone}`}
+                  style={stagger(i, {
+                    left: `${(s.start / 12) * 100}%`,
+                    width: `${((s.end - s.start) / 12) * 100}%`,
+                  })}
+                />
+              ))}
+            </div>
+            <div className="hc-line__ticks">
+              {TICKS.map((t, i) => (
+                <span key={t} style={{ left: `${(i / 12) * 100}%` }}>{t}</span>
+              ))}
+            </div>
           </div>
 
           <div className="appwin__pills">

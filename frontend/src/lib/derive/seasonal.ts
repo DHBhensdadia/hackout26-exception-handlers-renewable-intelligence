@@ -1,74 +1,112 @@
-import type { SiteRecord } from "@/types";
-import { hash01, round } from "./util";
-
-export interface SeasonalMonth {
-  month: string;
-  gen: number;
-  demand: number;
-  pattern: "surplus" | "balanced" | "shortage";
-}
-
-export interface SeasonalNote {
-  title: string;
-  body: string;
-}
-
-export interface SeasonalResult {
-  months: SeasonalMonth[];
-  notes: SeasonalNote[];
-}
+import type { RegionRecord, SeasonalCell, SeasonalResponse } from "@/types";
+import { REGION_PROFILES, forEachHistoryStep } from "./history";
+import { round } from "./util";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const hh = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
-/** Seasonal generation shapes for the Indian grid (relative to installed potential). */
-const SOLAR_SHAPE = [0.72, 0.78, 0.92, 0.98, 1.0, 0.86, 0.6, 0.58, 0.68, 0.85, 0.8, 0.7];
-const WIND_SHAPE = [0.85, 0.8, 0.75, 0.78, 0.9, 1.0, 1.05, 1.0, 0.9, 0.78, 0.8, 0.88];
-const DEMAND_SHAPE = [0.85, 0.88, 0.95, 1.0, 1.05, 1.0, 0.95, 0.92, 0.9, 0.88, 0.85, 0.86];
+export interface SeasonalMonthSummary {
+  month: string;
+  /** Mean median residual across the month, MW (negative = surplus). */
+  residual: number;
+  /** Expected surplus hours in this month, per year. */
+  surplus_hours: number;
+  /** Expected surplus energy in this month, MWh per year. */
+  surplus_mwh: number;
+}
+
+export interface SeasonalResult extends SeasonalResponse {
+  months: SeasonalMonthSummary[];
+  peak: { month: number; hour: number; residual_mwh: number };
+  recurring_surplus_hours: number;
+  recurring_surplus_mwh: number;
+  headline: string;
+}
 
 /**
- * Module 3 — seasonal pattern analysis (spec §9).
- * Turns the forecast horizon into the recurring pattern that outlives it.
+ * Storage sized to shift a typical day's recurring surplus into its recurring
+ * deficit, in the month that needs the most. Bounded by the deficit so storage
+ * is only built for energy the region can actually use.
  */
-export function seasonalPattern(site: SiteRecord): SeasonalResult {
-  const genScale = 0.82 + hash01(site.site_id + ":season") * 0.18;
-  const shape = site.tech === "solar" ? SOLAR_SHAPE : WIND_SHAPE;
+function storageToAbsorb(cells: SeasonalCell[]): number {
+  let best = 0;
+  for (let m = 0; m < 12; m++) {
+    const day = cells.filter((c) => c.month === m).sort((a, b) => a.hour - b.hour);
+    const surplus = day.reduce((a, c) => a + Math.max(0, c.residual_mwh), 0);
+    const deficit = day.reduce((a, c) => a + Math.max(0, -c.residual_mwh), 0);
+    best = Math.max(best, deficit > 0 ? Math.min(surplus, deficit) : surplus);
+  }
+  return Math.round(best);
+}
 
-  const months: SeasonalMonth[] = MONTHS.map((month, i) => {
-    const gen = round(shape[i] * genScale * 100, 0);
-    const demand = round(DEMAND_SHAPE[i] * 100, 0);
-    const pattern: SeasonalMonth["pattern"] =
-      gen > demand * 1.08 ? "surplus" : gen < demand * 0.92 ? "shortage" : "balanced";
-    return { month, gen, demand, pattern };
+/** Month x hour grid computed from three years of the regional climatology. */
+export function seasonalCells(region: RegionRecord): SeasonalResponse {
+  const profile = REGION_PROFILES[region.region_id];
+  const buckets: number[][][] = Array.from({ length: 12 }, () =>
+    Array.from({ length: 24 }, () => [] as number[])
+  );
+
+  forEachHistoryStep(profile, ({ month, hour, residual_mwh }) => {
+    buckets[month][hour].push(residual_mwh);
   });
 
-  const byGen = [...months].sort((a, b) => b.gen - a.gen);
-  const byDemand = [...months].sort((a, b) => b.demand - a.demand);
-  const surplus = months.filter((m) => m.pattern === "surplus").map((m) => m.month);
-  const shortage = months.filter((m) => m.pattern === "shortage").map((m) => m.month);
-
-  const notes: SeasonalNote[] = [
-    {
-      title: "Peak generation",
-      body: `${byGen[0].month} runs at ${byGen[0].gen} % of installed potential — the strongest surplus window of the year.`,
-    },
-    {
-      title: surplus.length >= 3 ? "Recurring surplus" : "Surplus windows",
-      body: surplus.length
-        ? `${surplus.slice(0, 3).join(", ")}${surplus.length > 3 ? "…" : ""} consistently exceed demand — storage sized here pays back fastest.`
-        : "No month exceeds demand by more than 8 % — generation is well matched to load.",
-    },
-    {
-      title: "High-demand season",
-      body: `${byDemand[0].month} carries the year's peak demand — the month to hold backup headroom.`,
-    },
-  ];
-
-  if (site.tech === "solar" && shortage.length) {
-    notes.push({
-      title: "Monsoon dip",
-      body: `${shortage[0]}–${shortage[shortage.length - 1]} is the low-output window for solar; plan maintenance and backup here.`,
-    });
+  const cells: SeasonalCell[] = [];
+  for (let m = 0; m < 12; m++) {
+    for (let h = 0; h < 24; h++) {
+      const arr = buckets[m][h].sort((a, b) => a - b);
+      const median = arr[Math.floor(arr.length / 2)] ?? 0;
+      const surplus = arr.filter((v) => v > 0).length / Math.max(1, arr.length);
+      cells.push({ month: m, hour: h, residual_mwh: round(median, 0), surplus_pct: round(surplus, 2) });
+    }
   }
 
-  return { months, notes: notes.slice(0, 3) };
+  return {
+    region_id: region.region_id,
+    window_years: 3,
+    source: "AEMO 2022–2024 climatology",
+    cells,
+    storage_to_absorb_mwh: storageToAbsorb(cells),
+  };
+}
+
+/** The reads the module leads with. */
+export function summarizeSeasonal(resp: SeasonalResponse): SeasonalResult {
+  const cells = resp.cells;
+  const months: SeasonalMonthSummary[] = MONTHS.map((month, m) => {
+    const day = cells.filter((c) => c.month === m);
+    let surplus_hours = 0;
+    let surplus_mwh = 0;
+    let total = 0;
+    for (const c of day) {
+      total += c.residual_mwh;
+      if (c.residual_mwh > 0) {
+        surplus_hours += DAYS[m];
+        surplus_mwh += c.residual_mwh * DAYS[m];
+      }
+    }
+    return { month, residual: round(total / 24, 0), surplus_hours, surplus_mwh: round(surplus_mwh, 0) };
+  });
+
+  const peak = cells.reduce((a, c) => (c.residual_mwh > a.residual_mwh ? c : a), cells[0]);
+  const recurring_surplus_hours = cells
+    .filter((c) => c.residual_mwh > 0)
+    .reduce((a, c) => a + DAYS[c.month], 0);
+
+  const headline =
+    peak.residual_mwh > 0
+      ? `Surplus recurs around ${hh(peak.hour)} in ${MONTHS[peak.month]} (+${peak.residual_mwh} MW median) — absorbing the recurring surplus takes about ${resp.storage_to_absorb_mwh} MWh of storage.`
+      : "No recurring surplus window inside the three-year climatology — generation stays behind demand in every month.";
+
+  return {
+    ...resp,
+    months,
+    peak: { month: peak.month, hour: peak.hour, residual_mwh: peak.residual_mwh },
+    recurring_surplus_hours,
+    recurring_surplus_mwh: round(
+      cells.reduce((a, c) => a + Math.max(0, c.residual_mwh) * DAYS[c.month], 0),
+      0
+    ),
+    headline,
+  };
 }

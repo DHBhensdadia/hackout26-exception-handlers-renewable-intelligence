@@ -4,9 +4,9 @@ import { ArrowUpRight, Check, ChevronDown, Play, SlidersHorizontal } from "lucid
 import { useDashboardContext } from "@/hooks/useDashboardContext";
 import { MODULES } from "./modules";
 
-const navClass = ({ isActive }: { isActive: boolean }) => (isActive ? "mod on" : "mod");
+const navClass = ({ isActive }: { isActive: boolean }) => (isActive ? "on" : undefined);
 
-/** Left console sidebar: app/site switcher, module nav, and the run footer. */
+/** App sidebar: site switcher, module nav, and the run controls footer. */
 export function Sidebar({
   open,
   onClose,
@@ -32,23 +32,23 @@ export function Sidebar({
   const current = sites.find((s) => s.site_id === (result?.site_id ?? form.site_id));
 
   return (
-    <aside className={open ? "sidebar open" : "sidebar"}>
-      <div className="sidebar__head" ref={head}>
+    <aside className={open ? "appwin__side open" : "appwin__side"}>
+      <div className="appwin__brand-wrap" ref={head}>
         <button
           type="button"
-          className="switcher"
+          className="appwin__brand"
           aria-haspopup="menu"
           aria-expanded={menu}
           onClick={() => setMenu((m) => !m)}
         >
-          <span className="switcher__logo" aria-hidden="true" />
-          <span className="switcher__label">console</span>
-          <ChevronDown className="switcher__chev" size={16} aria-hidden="true" />
+          <span className="mk" aria-hidden="true" />
+          console
+          <ChevronDown className={menu ? "cv cv--open" : "cv"} size={15} aria-hidden="true" />
         </button>
 
         {menu && (
-          <div className="switcher__menu" role="menu">
-            <span className="switcher__menu-cap">Registered sites</span>
+          <div className="appwin__menu" role="menu">
+            <span className="appwin__menu-cap">Registered sites</span>
             {sites.map((s) => {
               const on = s.site_id === (result?.site_id ?? form.site_id);
               return (
@@ -57,7 +57,6 @@ export function Sidebar({
                   type="button"
                   role="menuitemradio"
                   aria-checked={on}
-                  className={on ? "switcher__item on" : "switcher__item"}
                   onClick={() => {
                     pickSite(s);
                     setMenu(false);
@@ -69,7 +68,7 @@ export function Sidebar({
                 </button>
               );
             })}
-            <Link to="/" className="switcher__item" role="menuitem">
+            <Link to="/" role="menuitem">
               <span className="tid">Landing page</span>
               <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
@@ -77,32 +76,34 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="sidebar__cap">Modules</div>
+      <div className="appwin__grp">Modules</div>
 
-      <nav className="sidebar__nav" aria-label="Modules">
+      <nav className="appwin__nav" aria-label="Modules">
         {MODULES.map(({ to, label, n, Icon }) => (
           <NavLink key={to} to={to} end={to === "/dashboard"} className={navClass} onClick={onClose}>
-            <Icon size={16} strokeWidth={1.6} aria-hidden="true" />
-            <span>{label}</span>
+            <span className="em">
+              <Icon className="ic" size={15} aria-hidden="true" />
+            </span>
+            {label}
             <span className="n">{n}</span>
           </NavLink>
         ))}
       </nav>
 
-      <div className="sidebar__foot">
-        <div className="runline">
+      <div className="appwin__foot">
+        <div className="appwin__status">
           <span className={result ? "dot on" : "dot"} />
           <span>{result ? `${result.site_id} · ${result.tech} · ${result.points.length} h` : loading ? "running…" : "idle"}</span>
         </div>
-        <button type="button" className="sidebar__ctrl" onClick={onOpenSettings}>
-          <SlidersHorizontal size={15} aria-hidden="true" />
+        <button type="button" className="appwin__btn appwin__btn--ghost" onClick={onOpenSettings}>
+          <SlidersHorizontal className="ic" size={14} aria-hidden="true" />
           Run settings
         </button>
-        <button type="button" className="sidebar__run" onClick={run} disabled={loading}>
-          <Play size={14} aria-hidden="true" />
+        <button type="button" className="appwin__btn appwin__btn--solid" onClick={run} disabled={loading}>
+          <Play className="ic" size={13} aria-hidden="true" />
           {loading ? "Running…" : "Run forecast"}
         </button>
-        {current && <span className="sidebar__note">{current.region}</span>}
+        {current && <span className="appwin__region">{current.region}</span>}
       </div>
     </aside>
   );
