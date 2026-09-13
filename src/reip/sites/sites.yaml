@@ -1,6 +1,7 @@
 sites:
 - site_id: AEMO-ADPBA1
   name: Adelaide Desalination (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 15.409999999999998
   latitude: -35.09694820846758
@@ -16,6 +17,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-ADPPV1
   name: Adelaide Desalination (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 19.73078041666668
   latitude: -35.09694820846758
@@ -32,6 +34,7 @@ sites:
   mount: fixed
 - site_id: AEMO-ARWF1
   name: Ararat (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 241.59
   latitude: -37.263393
@@ -47,6 +50,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-AVLSF1
   name: Avonlie (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 187.5784287375
   latitude: -34.91911505022873
@@ -63,6 +67,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BALDHWF1
   name: Bald Hills (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 106.6
   latitude: -38.7581889808652
@@ -78,6 +83,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BANGOWF1
   name: Bango (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 147.50910233750002
   latitude: -34.767207772932835
@@ -93,6 +99,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BANGOWF2
   name: Bango (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 81.82403790416667
   latitude: -34.767207772932835
@@ -108,6 +115,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BANN1
   name: Bannerton (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 100.0
   latitude: -34.67263
@@ -124,6 +132,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BARCSF1
   name: Barcaldine (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 16.433333045
   latitude: -23.547333
@@ -140,6 +149,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BERYLSF1
   name: Beryl (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 98.0
   latitude: -32.347501
@@ -156,6 +166,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BLUFF1
   name: The Bluff (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 52.5
   latitude: -33.3677405026772
@@ -171,6 +182,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BNGSF1
   name: Bungala One (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 135.0
   latitude: -32.423316
@@ -187,6 +199,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BNGSF2
   name: Bungala Two (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 135.0
   latitude: -32.406993
@@ -203,6 +216,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BOCORWF1
   name: Boco Rock (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 113.0
   latitude: -36.574526757506106
@@ -218,6 +232,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BODWF1
   name: Bodangora (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 113.0
   latitude: -32.407128
@@ -233,6 +248,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BROKENH1
   name: Broken Hill (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 53.28252333333334
   latitude: -31.988905
@@ -249,6 +265,7 @@ sites:
   mount: fixed
 - site_id: AEMO-BRYB1WF1
   name: Berrybank (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 174.83702688333335
   latitude: -37.98074089349125
@@ -264,6 +281,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BULBES1
   name: Bulgana Green Power Hub (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 12.815054166666743
   latitude: -37.03950707571258
@@ -279,6 +297,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-BULGANA1
   name: Bulgana Green Power Hub (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 180.196615025
   latitude: -37.03950707571258
@@ -294,6 +313,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CAPTL_WF
   name: Capital (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 140.0
   latitude: -35.123534200872996
@@ -309,6 +329,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CATHROCK
   name: Cathedral Rocks (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 66.0
   latitude: -34.8487411412149
@@ -324,6 +345,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CHALLHWF
   name: Challicum Hills (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 52.0
   latitude: -37.395465970035204
@@ -339,6 +361,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CHILDSF1
   name: Childers (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 49.11172083333335
   latitude: -25.295026999999997
@@ -355,6 +378,7 @@ sites:
   mount: fixed
 - site_id: AEMO-CLARESF1
   name: Clare (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 110.0
   latitude: -19.83977
@@ -371,6 +395,7 @@ sites:
   mount: fixed
 - site_id: AEMO-CLEMGPWF
   name: Clements Gap (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 57.0
   latitude: -33.4897731866514
@@ -386,6 +411,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CLERMSF1
   name: Clermont (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 72.56727457083335
   latitude: -22.8394058
@@ -402,6 +428,7 @@ sites:
   mount: fixed
 - site_id: AEMO-CNUNDAWF
   name: Canunda (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 46.0
   latitude: -37.6983027777778
@@ -417,6 +444,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-COLEASF1
   name: Coleambally (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 180.0
   latitude: -34.759494000000004
@@ -433,6 +461,7 @@ sites:
   mount: fixed
 - site_id: AEMO-COLUMSF1
   name: Columboola (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 162.8639016375
   latitude: -26.6360877
@@ -449,6 +478,7 @@ sites:
   mount: fixed
 - site_id: AEMO-COLWF01
   name: Collector (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 226.8
   latitude: -34.82387856332685
@@ -464,6 +494,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-COOPGWF1
   name: Coopers Gap (QLD)
+  market_region: QLD1
   tech: wind
   capacity_mw: 452.0
   latitude: -26.7170038
@@ -479,6 +510,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CROOKWF2
   name: Crookwell 2 (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 90.39322149583333
   latitude: -34.547676
@@ -494,6 +526,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CROWLWF1
   name: Crowlands (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 79.0
   latitude: -36.97615
@@ -509,6 +542,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CRURWF1
   name: Crudine Ridge (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 141.0
   latitude: -32.86474841023679
@@ -524,6 +558,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CSPVPS1
   name: Collinsville (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 42.0
   latitude: -20.55714
@@ -540,6 +575,7 @@ sites:
   mount: fixed
 - site_id: AEMO-CTHLWF1
   name: Cattle Hill (TAS)
+  market_region: TAS1
   tech: wind
   capacity_mw: 148.0
   latitude: -42.1548445
@@ -555,6 +591,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-CULLRGWF
   name: Cullerin Range (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 30.0
   latitude: -34.7509945681949
@@ -570,6 +607,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-DARLSF1
   name: Darlington Point (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 324.0
   latitude: -34.64480799740922
@@ -586,6 +624,7 @@ sites:
   mount: fixed
 - site_id: AEMO-DAYDSF1
   name: Daydream (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 141.25346498750002
   latitude: -20.512804
@@ -602,6 +641,7 @@ sites:
   mount: fixed
 - site_id: AEMO-DDSF1
   name: Darling Downs (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 121.0
   latitude: -27.112
@@ -618,6 +658,7 @@ sites:
   mount: fixed
 - site_id: AEMO-DIAPURWF1
   name: Diapur 2 (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 8.0
   latitude: -36.33995255346413
@@ -633,6 +674,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-DULAWF1
   name: Dulacca (QLD)
+  market_region: QLD1
   tech: wind
   capacity_mw: 180.0
   latitude: -26.637485359480248
@@ -648,6 +690,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-DUNDWF1
   name: Dundonnell (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 165.68371338333333
   latitude: -37.8638943
@@ -663,6 +706,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-DUNDWF2
   name: Dundonnell (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 45.604166666666664
   latitude: -37.8638943
@@ -678,6 +722,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-DUNDWF3
   name: Dundonnell (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 120.45457083333334
   latitude: -37.8638943
@@ -693,6 +738,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-EDENVSF1
   name: Edenvale (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 180.0
   latitude: -26.947486249430344
@@ -709,6 +755,7 @@ sites:
   mount: fixed
 - site_id: AEMO-EMERASF1
   name: Emerald (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 88.0
   latitude: -23.50879
@@ -725,6 +772,7 @@ sites:
   mount: fixed
 - site_id: AEMO-FINLYSF1
   name: Finley (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 128.35070212916668
   latitude: -35.64421
@@ -741,6 +789,7 @@ sites:
   mount: fixed
 - site_id: AEMO-FLYCRKWF
   name: Flyers Creek Wind Farm (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 136.12253623750001
   latitude: -33.52147510941558
@@ -756,6 +805,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GANGARR1
   name: Gangarri (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 119.28
   latitude: -26.254812591286022
@@ -772,6 +822,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GANNSF1
   name: Gannawarra (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 49.84166666666667
   latitude: -35.73
@@ -788,6 +839,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GLENSF1
   name: Glenrowan (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 126.0
   latitude: -36.475196180192505
@@ -804,6 +856,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GLRWNSF1
   name: Glenrowan West (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 132.0
   latitude: -36.48808269701029
@@ -820,6 +873,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GRANWF1
   name: Granville Harbour (TAS)
+  market_region: TAS1
   tech: wind
   capacity_mw: 111.0
   latitude: -41.802
@@ -835,6 +889,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GRIFSF1
   name: Griffith (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 27.0
   latitude: -34.317414
@@ -851,6 +906,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GSWF1A
   name: Goyder South (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 190.31626916666673
   latitude: -33.682196301707506
@@ -866,6 +922,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GSWF1B1
   name: Goyder South (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 187.19190416666638
   latitude: -33.682196301707506
@@ -881,6 +938,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GULLRSF1
   name: Gullen Range (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 9.883183333333333
   latitude: -34.624511555250805
@@ -897,6 +955,7 @@ sites:
   mount: fixed
 - site_id: AEMO-GULLRWF1
   name: Gullen Range (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 175.0
   latitude: -34.624511555250805
@@ -912,6 +971,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GULLRWF2
   name: Gullen Range (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 175.0
   latitude: -34.624511555250805
@@ -927,6 +987,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-GUNNING1
   name: Gunning (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 47.0
   latitude: -34.676360746605894
@@ -942,6 +1003,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-HALLWF1
   name: Hallett 1 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 95.0
   latitude: -33.3284341007768
@@ -957,6 +1019,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-HALLWF2
   name: Hallett 2 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 71.0
   latitude: -33.5382102938784
@@ -972,6 +1035,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-HAMISF1
   name: Hamilton (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 57.0
   latitude: -20.468593
@@ -988,6 +1052,7 @@ sites:
   mount: fixed
 - site_id: AEMO-HAUGHT11
   name: Haughton (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 99.8538083625
   latitude: -19.732167999999998
@@ -1004,6 +1069,7 @@ sites:
   mount: fixed
 - site_id: AEMO-HAYMSF1
   name: Hayman (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 57.0
   latitude: -20.536162
@@ -1020,6 +1086,7 @@ sites:
   mount: fixed
 - site_id: AEMO-HDWF1
   name: Hornsdale (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 102.0
   latitude: -33.05982
@@ -1035,6 +1102,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-HDWF2
   name: Hornsdale 2 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 102.0
   latitude: -33.05982
@@ -1050,6 +1118,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-HDWF3
   name: Hornsdale 3 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 112.0
   latitude: -33.05982
@@ -1065,6 +1134,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-JEMALNG1
   name: Jemalong (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 55.0
   latitude: -33.388764003159444
@@ -1081,6 +1151,7 @@ sites:
   mount: fixed
 - site_id: AEMO-KABANWF1
   name: Kaban (QLD)
+  market_region: QLD1
   tech: wind
   capacity_mw: 156.0
   latitude: -17.56060647720051
@@ -1096,6 +1167,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-KARSF1
   name: Karadoc (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 104.0
   latitude: -34.227903999999995
@@ -1112,6 +1184,7 @@ sites:
   mount: fixed
 - site_id: AEMO-KIAMSF1
   name: Kiamal (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 239.0
   latitude: -35.01813312719621
@@ -1128,6 +1201,7 @@ sites:
   mount: fixed
 - site_id: AEMO-KIATAWF1
   name: Kiata (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 31.0
   latitude: -36.397693
@@ -1143,6 +1217,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-KSP1
   name: Kidston (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 50.0
   latitude: -18.88
@@ -1159,6 +1234,7 @@ sites:
   mount: fixed
 - site_id: AEMO-LGAPBS1
   name: Lincoln Gap (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 0.16677083333333484
   latitude: -32.5463326
@@ -1174,6 +1250,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LGAPWF1
   name: Lincoln Gap (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 103.19891454583335
   latitude: -32.5463326
@@ -1189,6 +1266,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LGAPWF2
   name: Lincoln Gap (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 84.77830792916666
   latitude: -32.5463326
@@ -1204,6 +1282,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LILYSF1
   name: Lilyvale (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 92.23098914166667
   latitude: -23.070504
@@ -1220,6 +1299,7 @@ sites:
   mount: fixed
 - site_id: AEMO-LIMOSF11
   name: Limondale (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 275.0
   latitude: -34.7755018
@@ -1236,6 +1316,7 @@ sites:
   mount: fixed
 - site_id: AEMO-LIMOSF21
   name: Limondale 2 (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 29.032304999999997
   latitude: -34.7755018
@@ -1252,6 +1333,7 @@ sites:
   mount: fixed
 - site_id: AEMO-LKBONNY1
   name: Lake Bonney (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 81.0
   latitude: -37.7605043836737
@@ -1267,6 +1349,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LKBONNY2
   name: Lake Bonney 2 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 159.0
   latitude: -37.7605043836737
@@ -1282,6 +1365,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LKBONNY3
   name: Lake Bonney 3 (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 39.0
   latitude: -37.7605043836737
@@ -1297,6 +1381,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-LRSF1
   name: Longreach (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 17.0
   latitude: -23.455048
@@ -1313,6 +1398,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MACARTH1
   name: Macarthur (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 326.5949995708334
   latitude: -38.043482838344104
@@ -1328,6 +1414,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MANSLR1
   name: Manildra (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 36.32007833333334
   latitude: -33.172831
@@ -1344,6 +1431,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MAPS2PV1
   name: Mannum (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 11.050000000000002
   latitude: -34.92021697813909
@@ -1360,6 +1448,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MARYRSF1
   name: Maryrorough (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 33.0
   latitude: -27.7089727
@@ -1376,6 +1465,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MBPS2PV1
   name: Murray Bridge-Onkaparinga (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 8.596162500000004
   latitude: -35.0940934825907
@@ -1392,6 +1482,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MERCER01
   name: Mt Mercer (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 131.0
   latitude: -37.8475926188678
@@ -1407,6 +1498,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MEWF1
   name: Mt Emerald (QLD)
+  market_region: QLD1
   tech: wind
   capacity_mw: 180.0
   latitude: -17.133248000000002
@@ -1422,6 +1514,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MIDDLSF1
   name: Middlemount (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 30.0
   latitude: -22.82223463474125
@@ -1438,6 +1531,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MLSP1
   name: Mugga Lane (ACT)
+  market_region: NSW1
   tech: solar
   capacity_mw: 12.0
   latitude: -35.398441
@@ -1454,6 +1548,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MLWF1
   name: Mortons Lane (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 20.0
   latitude: -37.8331864361526
@@ -1469,6 +1564,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MOLNGSF1
   name: Molong (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 27.05240199583336
   latitude: -33.08257771229906
@@ -1485,6 +1581,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MOORAWF1
   name: Moorabool (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 300.69908005
   latitude: -37.739432726598274
@@ -1500,6 +1597,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MOREESF1
   name: Moree (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 57.0
   latitude: -29.572607
@@ -1516,6 +1614,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MOUSF1
   name: Moura (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 99.0
   latitude: -24.509628260067526
@@ -1532,6 +1631,7 @@ sites:
   mount: fixed
 - site_id: AEMO-MRTLSWF1
   name: Mortlake South (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 153.0
   latitude: -38.1479652
@@ -1547,6 +1647,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MTGELWF1
   name: Mt Gellibrand (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 99.5353486375
   latitude: -38.257657
@@ -1562,6 +1663,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MTMILLAR
   name: Mt Millar (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 70.0
   latitude: -33.6193424956887
@@ -1577,6 +1679,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MUSSELR1
   name: Musselroe (TAS)
+  market_region: TAS1
   tech: wind
   capacity_mw: 168.0
   latitude: -40.777105262677395
@@ -1592,6 +1695,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MUWAWF1
   name: Murra Warra (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 199.9483508583335
   latitude: -36.438821000000004
@@ -1607,6 +1711,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-MUWAWF2
   name: Murra Warra (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 194.4790412875
   latitude: -36.438821000000004
@@ -1622,6 +1727,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-NBHWF1
   name: North Brown Hill (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 132.0
   latitude: -33.2281156193048
@@ -1637,6 +1743,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-NEVERSF1
   name: Nevertire (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 104.9825
   latitude: -31.831043800000003
@@ -1653,6 +1760,7 @@ sites:
   mount: fixed
 - site_id: AEMO-NEWENSF1
   name: New England (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 199.3555603625
   latitude: -30.627322613322704
@@ -1669,6 +1777,7 @@ sites:
   mount: fixed
 - site_id: AEMO-NEWENSF2
   name: New England (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 199.10676961666667
   latitude: -30.627322613322704
@@ -1685,6 +1794,7 @@ sites:
   mount: fixed
 - site_id: AEMO-NUMURSF1
   name: Numurkah (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 99.9687375
   latitude: -36.159275
@@ -1701,6 +1811,7 @@ sites:
   mount: fixed
 - site_id: AEMO-NYNGAN1
   name: Nyngan (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 102.0
   latitude: -31.563191344278497
@@ -1717,6 +1828,7 @@ sites:
   mount: fixed
 - site_id: AEMO-OAKEY1SF
   name: Oakey (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 30.0
   latitude: -27.402454
@@ -1733,6 +1845,7 @@ sites:
   mount: fixed
 - site_id: AEMO-OAKEY2SF
   name: Oakey 2 (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 65.0
   latitude: -27.402454
@@ -1749,6 +1862,7 @@ sites:
   mount: fixed
 - site_id: AEMO-OAKLAND1
   name: Oaklands Hill (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 67.0
   latitude: -37.6794809945517
@@ -1764,6 +1878,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-PAREPW1
   name: Port Augusta Energy Park (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 309.0
   latitude: -32.59560885770281
@@ -1779,6 +1894,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-PARSF1
   name: Parkes (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 55.0
   latitude: -33.113056
@@ -1795,6 +1911,7 @@ sites:
   mount: fixed
 - site_id: AEMO-PORTWF
   name: Portland (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 148.0
   latitude: -38.3614171461369
@@ -1810,6 +1927,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-ROYALLA1
   name: Royalla (ACT)
+  market_region: NSW1
   tech: solar
   capacity_mw: 20.0
   latitude: -35.486052460420105
@@ -1826,6 +1944,7 @@ sites:
   mount: fixed
 - site_id: AEMO-RRSF1
   name: Ross River (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 128.0
   latitude: -19.425304999999998
@@ -1842,6 +1961,7 @@ sites:
   mount: fixed
 - site_id: AEMO-RUGBYR1
   name: Rugby Run (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 64.59050623750001
   latitude: -21.940469
@@ -1858,6 +1978,7 @@ sites:
   mount: fixed
 - site_id: AEMO-RYEPARK1
   name: Rye Park (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 396.0
   latitude: -34.63316963326623
@@ -1873,6 +1994,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SALTCRK1
   name: Salt Creek (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 54.0
   latitude: -37.918698
@@ -1888,6 +2010,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SAPHWF1
   name: Sapphire (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 270.0
   latitude: -29.710272999999997
@@ -1903,6 +2026,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SMCSF1
   name: Sun Metals (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 117.0
   latitude: -19.437317999999998
@@ -1919,6 +2043,7 @@ sites:
   mount: fixed
 - site_id: AEMO-SNOWNTH1
   name: Snowtown North (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 144.0
   latitude: -33.756478648772394
@@ -1934,6 +2059,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SNOWSTH1
   name: Snowtown South (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 126.0
   latitude: -33.862624210288
@@ -1949,6 +2075,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SNOWTWN1
   name: Snowtown (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 99.0
   latitude: -33.6915984540895
@@ -1964,6 +2091,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SRSF1
   name: Susan River (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 66.41599115833333
   latitude: -25.420275
@@ -1980,6 +2108,7 @@ sites:
   mount: fixed
 - site_id: AEMO-STARHLWF
   name: Starfish Hill (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 35.0
   latitude: -35.5789829575224
@@ -1995,6 +2124,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-STOCKYD1
   name: Stockyard Hill (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 502.9020470958333
   latitude: -37.53567986175766
@@ -2010,6 +2140,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-STWF1
   name: Silverton (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 198.0
   latitude: -31.86095
@@ -2025,6 +2156,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-SUNRSF1
   name: Sunraysia (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 228.0
   latitude: -34.821489157371836
@@ -2041,6 +2173,7 @@ sites:
   mount: fixed
 - site_id: AEMO-TARALGA1
   name: Taralga (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 106.0
   latitude: -34.4253872675598
@@ -2056,6 +2189,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-TB2SF1
   name: Tailem Bend 2 (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 86.75128259166667
   latitude: -35.28
@@ -2072,6 +2206,7 @@ sites:
   mount: fixed
 - site_id: AEMO-TBSF1
   name: Tailem Bend (SA)
+  market_region: SA1
   tech: solar
   capacity_mw: 108.0
   latitude: -35.28
@@ -2088,6 +2223,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WANDSF1
   name: Wandoan Solar Farm (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 125.51532264166666
   latitude: -26.263563967767258
@@ -2104,6 +2240,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WATERLWF
   name: Waterloo (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 130.0
   latitude: -33.991095267936004
@@ -2119,6 +2256,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WAUBRAWF
   name: Waubra (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 192.0
   latitude: -37.3579790620375
@@ -2134,6 +2272,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WEMENSF1
   name: Wemen (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 97.0
   latitude: -34.80259
@@ -2150,6 +2289,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WGWF1
   name: Willogoleche (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 119.0
   latitude: -33.393569
@@ -2165,6 +2305,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WHITSF1
   name: Whitsunday (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 57.0
   latitude: -20.537259
@@ -2181,6 +2322,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WINTSF1
   name: Winton (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 85.0
   latitude: -36.49969510417262
@@ -2197,6 +2339,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WOODLWN1
   name: Woodlawn (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 48.0
   latitude: -35.0816745987566
@@ -2212,6 +2355,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WOOLGSF1
   name: Woolooga (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 174.0747504541667
   latitude: -26.0845224
@@ -2228,6 +2372,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WOOLNTH1
   name: Woolnorth (TAS)
+  market_region: TAS1
   tech: wind
   capacity_mw: 140.0
   latitude: -40.736374750198706
@@ -2243,6 +2388,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WPWF
   name: Wattle Point (SA)
+  market_region: SA1
   tech: wind
   capacity_mw: 91.0
   latitude: -35.1154104383038
@@ -2258,6 +2404,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WRSF1
   name: White Rock (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 22.0
   latitude: -29.7632925
@@ -2274,6 +2421,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WRWF1
   name: White Rock (NSW)
+  market_region: NSW1
   tech: wind
   capacity_mw: 175.0
   latitude: -29.8291832
@@ -2289,6 +2437,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-WSTWYSF1
   name: West Wyalong (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 82.88536763333342
   latitude: -33.7956353638098
@@ -2305,6 +2454,7 @@ sites:
   mount: fixed
 - site_id: AEMO-WYASF1
   name: Wyalong Solar Farm (NSW)
+  market_region: NSW1
   tech: solar
   capacity_mw: 47.43470833333334
   latitude: -33.80493895585568
@@ -2321,6 +2471,7 @@ sites:
   mount: fixed
 - site_id: AEMO-YAMBUKWF
   name: Yambuk (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 30.0
   latitude: -38.305278107624
@@ -2336,6 +2487,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-YARANSF1
   name: Yarranlea (QLD)
+  market_region: QLD1
   tech: solar
   capacity_mw: 80.45
   latitude: -27.7089394
@@ -2352,6 +2504,7 @@ sites:
   mount: fixed
 - site_id: AEMO-YATSF1
   name: Yatpool (VIC)
+  market_region: VIC1
   tech: solar
   capacity_mw: 94.0
   latitude: -34.38072973033968
@@ -2368,6 +2521,7 @@ sites:
   mount: fixed
 - site_id: AEMO-YENDWF1
   name: Yendon (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 144.0
   latitude: -37.630952
@@ -2383,6 +2537,7 @@ sites:
   location_is_estimated: false
 - site_id: AEMO-YSWF1
   name: Yaloak South (VIC)
+  market_region: VIC1
   tech: wind
   capacity_mw: 28.0
   latitude: -37.716474

@@ -18,71 +18,71 @@ an input feature, so that column measures exactly what the learned correction ad
 
 ## Solar
 
-Trained on 188,997 rows from 9 sites
-(2025-09-01 to 2026-08-31),
-evaluated on 47,250 untouched holdout rows from
-2026-06-19 onward. Horizons present in this data: 24-72 h.
+Trained on 1,566,552 rows from 72 sites
+(2025-05-01 to 2026-08-31),
+evaluated on 505,656 untouched holdout rows from 2026-07-01 onward.
+The corpus carries genuine 24-72 h leads.
 
 ### Overall, holdout
 
 | Method | nMAE %cap | nRMSE %cap | Bias %cap | R2 | Skill vs smart persistence % |
 |---|---:|---:|---:|---:|---:|
-| **Model (quantile GBDT)** | 6.92 | 14.80 | 1.39 | 0.75 | 9.81 |
-| Persistence | 7.68 | 17.00 | 0.40 | 0.61 | 0.00 |
-| Smart persistence | 7.68 | 17.00 | 0.40 | 0.61 | 0.00 |
-| Climatology | 18.81 | 24.09 | -0.67 | 0.17 | -144.94 |
-| Physics only (no ML) | 13.72 | 25.69 | -9.55 | 0.02 | -78.70 |
+| **Model (quantile GBDT)** | 5.67 | 12.39 | -0.70 | 0.79 | 23.55 |
+| Persistence | 7.10 | 15.73 | 0.23 | 0.63 | 4.18 |
+| Smart persistence | 7.41 | 15.91 | 1.15 | 0.63 | 0.00 |
+| Climatology | 7.51 | 14.95 | 0.35 | 0.66 | -1.31 |
+| Physics only (no ML) | 14.61 | 27.12 | -10.41 | -0.10 | -97.16 |
 
-Mean pinball loss on the dimensionless target: **0.0204**
-(p10 0.0148, p50 0.0346, p90 0.0118).
+Mean pinball loss on the dimensionless target: **0.0171**
+(p10 0.0128, p50 0.0283, p90 0.0100).
 
-Prediction interval coverage (p10-p90): **86.9%**
-against a nominal 80%, with a mean width of 19.8% of capacity.
+Prediction interval coverage (p10-p90): **91.5%**
+against a nominal 80%, with a mean width of 18.1% of capacity.
 
 ### By lead time
 
 | Lead | n | Model nMAE | Persistence | Smart persist. | Climatology | Physics only | Skill % | PICP % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1-24h | 15750 | 6.93 | 6.92 | 6.92 | 18.81 | 13.63 | -0.07 | 86.98 |
-| 25-48h | 15750 | 6.92 | 8.08 | 8.08 | 18.81 | 13.79 | 14.44 | 86.91 |
-| 49-72h | 15750 | 6.93 | 8.03 | 8.03 | 18.81 | 13.74 | 13.68 | 86.91 |
-| all | 47250 | 6.92 | 7.68 | 7.68 | 18.81 | 13.72 | 9.81 | 86.94 |
+| 1-24h | 168552 | 5.54 | 6.34 | 6.74 | 7.51 | 14.52 | 17.76 | 91.61 |
+| 25-48h | 168552 | 5.69 | 7.37 | 7.65 | 7.51 | 14.67 | 25.62 | 91.31 |
+| 49-72h | 168552 | 5.77 | 7.60 | 7.85 | 7.51 | 14.65 | 26.49 | 91.45 |
+| all | 505656 | 5.67 | 7.10 | 7.41 | 7.51 | 14.61 | 23.55 | 91.46 |
 
-Top features by gain: ghi_wm2_lead3, site_latitude, site_tilt, doy_sin, site_capacity_mw, ghi_wm2_lead2, solar_zenith, cloud_total_roll_mean.
+Top features by gain: ghi_wm2_lead1, solar_zenith, solar_elevation, site_latitude, ghi_wm2_lead2, site_tilt, cloud_total_roll_mean, site_capacity_mw.
 
 ## Wind
 
-Trained on 251,994 rows from 12 sites
-(2025-09-01 to 2026-08-31),
-evaluated on 63,000 untouched holdout rows from
-2026-06-19 onward. Horizons present in this data: 24-72 h.
+Trained on 1,675,767 rows from 79 sites
+(2025-05-01 to 2026-08-31),
+evaluated on 554,775 untouched holdout rows from 2026-07-01 onward.
+The corpus carries genuine 24-72 h leads.
 
 ### Overall, holdout
 
 | Method | nMAE %cap | nRMSE %cap | Bias %cap | R2 | Skill vs smart persistence % |
 |---|---:|---:|---:|---:|---:|
-| **Model (quantile GBDT)** | 12.12 | 17.14 | 4.53 | 0.68 | 56.97 |
-| Persistence | 28.17 | 37.80 | -1.28 | -0.61 | 0.00 |
-| Smart persistence | 28.17 | 37.80 | -1.28 | -0.61 | 0.00 |
-| Climatology | 25.92 | 31.21 | -3.86 | -0.11 | 7.98 |
-| Physics only (no ML) | 13.74 | 21.35 | 6.38 | 0.54 | 51.24 |
+| **Model (quantile GBDT)** | 11.91 | 17.53 | 1.89 | 0.79 | 58.09 |
+| Persistence | 28.41 | 38.06 | -0.13 | -0.12 | 0.00 |
+| Smart persistence | 28.41 | 38.06 | -0.13 | -0.12 | 0.00 |
+| Climatology | 25.86 | 30.80 | -2.65 | 0.27 | 8.98 |
+| Physics only (no ML) | 16.20 | 24.46 | 5.87 | 0.61 | 42.98 |
 
-Mean pinball loss on the dimensionless target: **0.0383**
-(p10 0.0268, p50 0.0606, p90 0.0275).
+Mean pinball loss on the dimensionless target: **0.0374**
+(p10 0.0246, p50 0.0595, p90 0.0280).
 
-Prediction interval coverage (p10-p90): **71.8%**
-against a nominal 80%, with a mean width of 35.9% of capacity.
+Prediction interval coverage (p10-p90): **79.2%**
+against a nominal 80%, with a mean width of 38.2% of capacity.
 
 ### By lead time
 
 | Lead | n | Model nMAE | Persistence | Smart persist. | Climatology | Physics only | Skill % | PICP % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1-24h | 21000 | 12.09 | 22.38 | 22.38 | 25.92 | 13.09 | 45.98 | 71.85 |
-| 25-48h | 21000 | 12.12 | 29.08 | 29.08 | 25.92 | 13.68 | 58.31 | 71.79 |
-| 49-72h | 21000 | 12.15 | 33.05 | 33.05 | 25.92 | 14.44 | 63.23 | 71.69 |
-| all | 63000 | 12.12 | 28.17 | 28.17 | 25.92 | 13.74 | 56.97 | 71.77 |
+| 1-24h | 184925 | 11.29 | 23.34 | 23.34 | 25.86 | 15.60 | 51.62 | 79.19 |
+| 25-48h | 184925 | 11.80 | 29.71 | 29.71 | 25.86 | 16.10 | 60.27 | 79.31 |
+| 49-72h | 184925 | 12.63 | 32.18 | 32.18 | 25.86 | 16.90 | 60.76 | 79.07 |
+| all | 554775 | 11.91 | 28.41 | 28.41 | 25.86 | 16.20 | 58.09 | 79.19 |
 
-Top features by gain: ws_corrected, ws_corrected_roll_mean, wind_speed_100m_roll_mean, wind_speed_100m, ws_corrected_lead2, site_capacity_mw, ws_corrected_lead1, ws_corrected_lead3.
+Top features by gain: wind_speed_100m_roll_mean, wind_speed_100m, wind_speed_100m_lead1, ws_corrected_roll_mean, ws_hub, site_capacity_mw, site_specific_power, pressure_hpa.
 
 ## Forecast lead time: what is and is not measured
 

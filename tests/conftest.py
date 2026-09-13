@@ -58,9 +58,12 @@ def _canonical(kind: str, tech: str) -> pd.DataFrame | None:
     while the models train on AEMO would leave the skew test passing against data nothing
     in production touches - which is precisely the failure T1 exists to catch.
     """
+    from reip.models.train import CORPUS_PREFERENCE, power_corpus
+
     canonical = get_settings().data_canonical
-    for corpus in ("aemo", "gefcom"):
-        path = canonical / f"{corpus}_{tech}_{kind}.parquet"
+    for corpus in CORPUS_PREFERENCE:
+        name = power_corpus(corpus) if kind == "power" else corpus
+        path = canonical / f"{name}_{tech}_{kind}.parquet"
         if path.exists():
             return pd.read_parquet(path)
     return None
@@ -109,3 +112,12 @@ def fixture_weather_payload() -> dict:
     if not path.exists():
         pytest.skip("Open-Meteo fixture absent")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="session")
+def market() -> pd.DataFrame:
+    """Regional demand, price and rooftop PV, if the market ingest has been run."""
+    path = get_settings().data_canonical / "aemo_market.parquet"
+    if not path.exists():
+        pytest.skip("aemo_market.parquet absent; run `python -m reip.ingest.aemo_market`")
+    return pd.read_parquet(path)

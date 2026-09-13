@@ -33,11 +33,12 @@ from reip.models.backends import MODEL_SUFFIX, get_backend
 from reip.models.splits import (
     TARGET_COVERAGE,
     apply_conformal,
-    conformal_widening,
+    conformal_widening_by_bucket,
     empirical_coverage,
     make_split,
+    widening_for,
 )
-from reip.schemas import QUANTILES, Quantile, Tech
+from reip.schemas import LEAD_BUCKETS, QUANTILES, Quantile, Tech, lead_bucket
 from reip.sites.registry import SiteRegistry
 
 log = logging.getLogger(__name__)
@@ -74,17 +75,35 @@ def _git_sha() -> str:
 # --------------------------------------------------------------------------------------
 
 
-def available_corpora(tech: Tech) -> list[str]:
-    """Corpora on disk for a technology, most preferred first.
+# Corpora in preference order.
+#
+# `aemo_ml` leads: it is the same plants and the same SCADA as `aemo`, but its weather
+# carries genuine 24/48/72 h forecast leads from the Previous Runs archive rather than one
+# nominal lead. That is what lets `horizon_h` vary, and therefore what lets the p10-p90
+# band widen with lead time - the property every downstream consumer of the band depends on.
+#
+# `aemo` follows: real coordinates and real nameplate capacities, single lead.
+# `gefcom` last: anonymised and pre-normalised, but it keeps the pipeline working on a
+# fresh checkout that has only run the GEFCom ingest.
+CORPUS_PREFERENCE: tuple[str, ...] = ("aemo_ml", "aemo", "gefcom")
 
-    AEMO leads when present: its sites have true coordinates and real nameplate capacities,
-    where GEFCom's are anonymised and normalised. Falling back keeps the pipeline working
-    on a fresh checkout that has only run the GEFCom ingest.
-    """
+# Corpora that share another's power half. Generation does not change when the weather
+# source does, so re-fetching weather must not mean duplicating a multi-gigabyte power
+# parquet - or worse, letting the two copies drift apart.
+POWER_ALIAS: dict[str, str] = {"aemo_ml": "aemo"}
+
+
+def power_corpus(corpus: str) -> str:
+    """The corpus whose power parquet backs `corpus`."""
+    return POWER_ALIAS.get(corpus, corpus)
+
+
+def available_corpora(tech: Tech) -> list[str]:
+    """Corpora on disk for a technology, most preferred first."""
     canonical = get_settings().data_canonical
     found = []
-    for name in ("aemo", "gefcom"):
-        if (canonical / f"{name}_{tech.value}_power.parquet").exists() and (
+    for name in CORPUS_PREFERENCE:
+        if (canonical / f"{power_corpus(name)}_{tech.value}_power.parquet").exists() and (
             canonical / f"{name}_{tech.value}_weather.parquet"
         ).exists():
             found.append(name)
@@ -114,7 +133,9 @@ def assemble(
     log.info("%s: using corpus %r (available: %s)", tech.value, corpus, ", ".join(choices))
 
     weather_all = pd.read_parquet(settings.data_canonical / f"{corpus}_{tech.value}_weather.parquet")
-    power_all = pd.read_parquet(settings.data_canonical / f"{corpus}_{tech.value}_power.parquet")
+    power_all = pd.read_parquet(
+        settings.data_canonical / f"{power_corpus(corpus)}_{tech.value}_power.parquet"
+    )
 
     frames: list[pd.DataFrame] = []
     for site in registry.by_tech(tech):
@@ -288,27 +309,81 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
     lower_cal = np.minimum(calib_pred["p10"], calib_pred["p90"])
     upper_cal = np.maximum(calib_pred["p10"], calib_pred["p90"])
     raw_calib_coverage = empirical_coverage(y_calib.to_numpy(), lower_cal, upper_cal)
-    widening = conformal_widening(
-        y_calib.to_numpy(), lower_cal, upper_cal, coverage=TARGET_COVERAGE
+    # One widening per lead bucket. Forecast error grows with lead time, so a single scalar
+    # over-covers the near term and under-covers the far term while still averaging to the
+    # target - and it is the far term where a too-narrow band does the most damage.
+    h_calib = data.horizon_h.to_numpy()[split.calib]
+    widening = conformal_widening_by_bucket(
+        y_calib.to_numpy(), lower_cal, upper_cal, h_calib, coverage=TARGET_COVERAGE
     )
+    w_calib = widening_for(widening, h_calib)
     cal_calib_coverage = empirical_coverage(
-        y_calib.to_numpy(), *apply_conformal(lower_cal, upper_cal, widening)
+        y_calib.to_numpy(), *apply_conformal(lower_cal, upper_cal, w_calib)
     )
+    w_val = widening_for(widening, data.horizon_h.to_numpy()[split.val])
     cal_val_coverage = empirical_coverage(
-        y_val.to_numpy(), *apply_conformal(lower_val, upper_val, widening)
+        y_val.to_numpy(), *apply_conformal(lower_val, upper_val, w_val)
     )
 
     lower_test = np.minimum(test_pred["p10"], test_pred["p90"])
     upper_test = np.maximum(test_pred["p10"], test_pred["p90"])
     raw_test_coverage = empirical_coverage(y_test.to_numpy(), lower_test, upper_test)
-    cal_test = apply_conformal(lower_test, upper_test, widening)
+    h_test = data.horizon_h.to_numpy()[split.test]
+    cal_test = apply_conformal(lower_test, upper_test, widening_for(widening, h_test))
     cal_test_coverage = empirical_coverage(y_test.to_numpy(), *cal_test)
 
+    # MW conversion, hoisted above the bucket loop so per-bucket and headline nMAE are
+    # computed from exactly the same quantities.
+    capacity_test = data.capacity_mw.to_numpy()[split.test]
+    denom_test = data.denominator.to_numpy()[split.test]
+    actual_mw = y_test.to_numpy() * denom_test
+    predicted_mw = np.clip(test_pred["p50"] * denom_test, 0.0, capacity_test)
+
+    # Per-bucket coverage and band width on unseen sites. Width must increase with lead,
+    # and if it does not the multi-lead corpus has not done its job.
+    per_bucket = {}
+    test_buckets = np.array([lead_bucket(int(h)) for h in h_test])
+    for label, _lo, _hi in LEAD_BUCKETS:
+        mask = test_buckets == label
+        if not mask.any():
+            continue
+        per_bucket[label] = {
+            "n": int(mask.sum()),
+            # nMAE per bucket, not only overall. Without it a multi-lead model cannot be
+            # compared against a single-lead one at all: the pooled figure averages three
+            # difficulties, so a genuinely better model can look worse than a predecessor
+            # that was only ever scored on the easiest of them.
+            "nmae_pct": round(
+                float(
+                    100 * np.mean(np.abs(actual_mw[mask] - predicted_mw[mask]) / capacity_test[mask])
+                ),
+                3,
+            ),
+            "widening": round(float(widening.get(label, widening["all"])), 6),
+            "raw": round(
+                empirical_coverage(y_test.to_numpy()[mask], lower_test[mask], upper_test[mask]), 4
+            ),
+            "calibrated": round(
+                empirical_coverage(y_test.to_numpy()[mask], cal_test[0][mask], cal_test[1][mask]), 4
+            ),
+            "mean_width": round(float(np.mean(cal_test[1][mask] - cal_test[0][mask])), 6),
+        }
+
     log.info(
-        "  conformal widening %+.4f (fitted on %d held-out calibration sites)",
-        widening,
+        "  conformal widening %s (fitted on %d held-out calibration sites)",
+        {k: round(v, 4) for k, v in widening.items()},
         len(split.calib_sites),
     )
+    for label, stats in per_bucket.items():
+        log.info(
+            "    %-7s n=%-9s nMAE %.2f%%  coverage %.1f%%->%.1f%%  mean width %.4f",
+            label,
+            f"{stats['n']:,}",
+            stats["nmae_pct"],
+            100 * stats["raw"],
+            100 * stats["calibrated"],
+            stats["mean_width"],
+        )
     log.info(
         "    coverage: calib %.1f%%->%.1f%% | UNSEEN-SITE TEST %.1f%%->%.1f%% (target %.0f%%)",
         100 * raw_calib_coverage,
@@ -319,10 +394,6 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
     )
 
     # --- honest score on the spatially-unseen test sites -------------------------------
-    capacity_test = data.capacity_mw.to_numpy()[split.test]
-    denom_test = data.denominator.to_numpy()[split.test]
-    actual_mw = y_test.to_numpy() * denom_test
-    predicted_mw = np.clip(test_pred["p50"] * denom_test, 0.0, capacity_test)
     test_nmae = float(100 * np.mean(np.abs(actual_mw - predicted_mw) / capacity_test))
     test_nrmse = float(100 * np.sqrt(np.mean(((actual_mw - predicted_mw) / capacity_test) ** 2)))
     test_bias = float(100 * np.mean((actual_mw - predicted_mw) / capacity_test))
@@ -358,6 +429,7 @@ def train_technology(tech: Tech, *, out_dir: Path | None = None) -> dict:
             "val_calibrated": cal_val_coverage,
             "test_raw": raw_test_coverage,
             "test_calibrated": cal_test_coverage,
+            "test_by_lead_bucket": per_bucket,
         },
         "unseen_site_test": {
             "nmae_pct": test_nmae,

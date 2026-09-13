@@ -1,0 +1,94 @@
+{
+  "solar": {
+    "tech": "solar",
+    "test_sites": [
+      "AEMO-EDENVSF1",
+      "AEMO-EMERASF1",
+      "AEMO-GULLRSF1",
+      "AEMO-HAYMSF1",
+      "AEMO-JEMALNG1",
+      "AEMO-LILYSF1",
+      "AEMO-MANSLR1",
+      "AEMO-MARYRSF1",
+      "AEMO-MOREESF1",
+      "AEMO-NEWENSF2",
+      "AEMO-NYNGAN1",
+      "AEMO-SMCSF1",
+      "AEMO-TB2SF1",
+      "AEMO-WEMENSF1"
+    ],
+    "n_test_rows": 491484,
+    "by_lead_bucket": {
+      "1-24h": {
+        "n": 163828,
+        "current_nmae_pct": 8.22,
+        "baseline_nmae_pct": 8.152,
+        "improvement_pp": -0.068
+      },
+      "25-48h": {
+        "n": 163828,
+        "current_nmae_pct": 8.346,
+        "baseline_nmae_pct": 8.319,
+        "improvement_pp": -0.026
+      },
+      "49-72h": {
+        "n": 163828,
+        "current_nmae_pct": 8.492,
+        "baseline_nmae_pct": 8.507,
+        "improvement_pp": 0.015
+      }
+    },
+    "headline_as_reported": {
+      "current": 8.352517407308403,
+      "baseline": 8.304075176502005,
+      "note": "Not comparable: the baseline was scored on a best-available-forecast corpus (~0-24h lead), the current model on genuine 24/48/72h forecasts."
+    }
+  },
+  "wind": {
+    "tech": "wind",
+    "test_sites": [
+      "AEMO-ARWF1",
+      "AEMO-BLUFF1",
+      "AEMO-CROWLWF1",
+      "AEMO-CULLRGWF",
+      "AEMO-DUNDWF2",
+      "AEMO-DUNDWF3",
+      "AEMO-GRANWF1",
+      "AEMO-HALLWF2",
+      "AEMO-KABANWF1",
+      "AEMO-LGAPWF1",
+      "AEMO-LKBONNY1",
+      "AEMO-MRTLSWF1",
+      "AEMO-NBHWF1",
+      "AEMO-PORTWF",
+      "AEMO-RYEPARK1",
+      "AEMO-SALTCRK1"
+    ],
+    "n_test_rows": 561690,
+    "by_lead_bucket": {
+      "1-24h": {
+        "n": 187230,
+        "current_nmae_pct": 13.692,
+        "baseline_nmae_pct": 14.34,
+        "improvement_pp": 0.648
+      },
+      "25-48h": {
+        "n": 187230,
+        "current_nmae_pct": 14.123,
+        "baseline_nmae_pct": 14.837,
+        "improvement_pp": 0.714
+      },
+      "49-72h": {
+        "n": 187230,
+        "current_nmae_pct": 14.92,
+        "baseline_nmae_pct": 15.869,
+        "improvement_pp": 0.949
+      }
+    },
+    "headline_as_reported": {
+      "current": 14.244989998736585,
+      "baseline": 12.383521077469743,
+      "note": "Not comparable: the baseline was scored on a best-available-forecast corpus (~0-24h lead), the current model on genuine 24/48/72h forecasts."
+    }
+  }
+}

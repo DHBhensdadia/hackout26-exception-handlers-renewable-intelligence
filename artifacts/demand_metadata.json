@@ -1,0 +1,181 @@
+{
+  "model_version": "xgb-q-0.1.0",
+  "kind": "demand",
+  "backend": "xgboost",
+  "trained_at_utc": "2026-09-12T22:47:48.421565+00:00",
+  "regions": [
+    "NSW1",
+    "QLD1",
+    "SA1",
+    "TAS1",
+    "VIC1"
+  ],
+  "feature_order": [
+    "horizon_h",
+    "lead_day",
+    "hour_sin",
+    "hour_cos",
+    "doy_sin",
+    "doy_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_weekend",
+    "is_holiday",
+    "temp_2m_c",
+    "cloud_total",
+    "wind_speed_10m",
+    "ghi_wm2",
+    "cooling_degrees",
+    "heating_degrees",
+    "cooling_degrees_24h",
+    "load_lag_1h",
+    "load_lag_24h",
+    "load_lag_168h",
+    "rooftop_lag_24h",
+    "load_mean_24h",
+    "load_std_24h",
+    "load_mean_168h",
+    "load_std_168h",
+    "region_NSW1",
+    "region_QLD1",
+    "region_SA1",
+    "region_TAS1",
+    "region_VIC1",
+    "region_peak_mw"
+  ],
+  "dropped_constant_features": [],
+  "n_rows": 2088273,
+  "split": {
+    "train": 1251985,
+    "val": 209008,
+    "calib": 209120,
+    "test": 418160
+  },
+  "training_window": [
+    "2023-09-07 15:00:00+00:00",
+    "2026-08-31 13:00:00+00:00"
+  ],
+  "peak_mw": {
+    "NSW1": 12333.068063333334,
+    "QLD1": 10016.0741325,
+    "SA1": 2755.3729241666665,
+    "TAS1": 1626.3161916666668,
+    "VIC1": 8723.918705000006
+  },
+  "conformal_widening": {
+    "NSW1": {
+      "all": 0.009657585435920935,
+      "1-24h": 0.009008576154507786,
+      "25-48h": 0.010354747113092255,
+      "49-72h": 0.010731047994943177
+    },
+    "QLD1": {
+      "all": 0.007405553581463886,
+      "1-24h": 0.006960581996986015,
+      "25-48h": 0.00787571186078384,
+      "49-72h": 0.00771269484928494
+    },
+    "SA1": {
+      "all": 0.011345681341420222,
+      "1-24h": 0.010734816575690032,
+      "25-48h": 0.011612643491829763,
+      "49-72h": 0.01224388015472666
+    },
+    "TAS1": {
+      "all": 0.017745002311615965,
+      "1-24h": 0.01760296444311621,
+      "25-48h": 0.017241956534991887,
+      "49-72h": 0.018550590561701108
+    },
+    "VIC1": {
+      "all": 0.004703648982266606,
+      "1-24h": 0.0035633345193120114,
+      "25-48h": 0.005416267887241755,
+      "49-72h": 0.006353818440903214
+    }
+  },
+  "bias_correction": {
+    "NSW1": -0.005365921672584317,
+    "QLD1": 0.01610311732880748,
+    "SA1": 0.0004270455989601185,
+    "TAS1": -0.03389170445685774,
+    "VIC1": 0.011460976001068712
+  },
+  "best_rounds": {
+    "p10": 340,
+    "p50": 1484,
+    "p90": 302
+  },
+  "test": {
+    "model_nmae_pct": 3.153,
+    "seasonal_naive_nmae_pct": 10.876,
+    "coverage_raw": 0.6686,
+    "coverage_calibrated": 0.8061,
+    "coverage_on_calibration_set": 0.8002,
+    "by_lead_bucket": {
+      "1-24h": {
+        "n": 209080,
+        "model_nmae_pct": 3.08,
+        "seasonal_naive_nmae_pct": 10.327,
+        "coverage": 0.807,
+        "mean_width_pct": 9.735
+      },
+      "25-48h": {
+        "n": 104540,
+        "model_nmae_pct": 3.208,
+        "seasonal_naive_nmae_pct": 11.408,
+        "coverage": 0.8046,
+        "mean_width_pct": 9.983
+      },
+      "49-72h": {
+        "n": 104540,
+        "model_nmae_pct": 3.246,
+        "seasonal_naive_nmae_pct": 11.443,
+        "coverage": 0.8061,
+        "mean_width_pct": 10.12
+      }
+    },
+    "by_region": {
+      "NSW1": {
+        "model_nmae_pct": 2.271,
+        "seasonal_naive_nmae_pct": 10.398,
+        "coverage_raw": 0.7557,
+        "coverage_calibrated": 0.8259,
+        "bias_correction": -0.005366
+      },
+      "QLD1": {
+        "model_nmae_pct": 1.842,
+        "seasonal_naive_nmae_pct": 10.364,
+        "coverage_raw": 0.7648,
+        "coverage_calibrated": 0.8024,
+        "bias_correction": 0.016103
+      },
+      "SA1": {
+        "model_nmae_pct": 3.172,
+        "seasonal_naive_nmae_pct": 14.177,
+        "coverage_raw": 0.7449,
+        "coverage_calibrated": 0.8456,
+        "bias_correction": 0.000427
+      },
+      "TAS1": {
+        "model_nmae_pct": 4.148,
+        "seasonal_naive_nmae_pct": 7.785,
+        "coverage_raw": 0.5472,
+        "coverage_calibrated": 0.8875,
+        "bias_correction": -0.033892
+      },
+      "VIC1": {
+        "model_nmae_pct": 4.333,
+        "seasonal_naive_nmae_pct": 11.656,
+        "coverage_raw": 0.5301,
+        "coverage_calibrated": 0.6694,
+        "bias_correction": 0.011461
+      }
+    }
+  },
+  "artifacts": {
+    "p10": "demand_p10.json",
+    "p50": "demand_p50.json",
+    "p90": "demand_p90.json"
+  }
+}

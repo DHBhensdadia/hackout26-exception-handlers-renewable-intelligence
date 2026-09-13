@@ -341,6 +341,17 @@ class SiteMeta(BaseModel):
     # (GEFCom zones are anonymised). Surfaced so the report can be honest about it.
     location_is_estimated: bool = False
 
+    # Market region the site dispatches into - NSW1, QLD1, SA1, TAS1, VIC1 for the NEM.
+    #
+    # The forecasting model has no use for this: it predicts one plant from weather and
+    # geometry, and a market boundary is not a physical input. Everything downstream does,
+    # because demand, price and the balance equation are all defined per region, and a
+    # plant can only be netted against the load it can actually reach.
+    #
+    # Optional because GEFCom zones and any ad-hoc lat/lon the API is handed have no
+    # region at all. Consumers that need one must say so rather than assume.
+    market_region: str | None = None
+
     @field_validator("site_id")
     @classmethod
     def _non_empty(cls, v: str) -> str:
