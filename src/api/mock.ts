@@ -1,9 +1,11 @@
 import { hash01 } from "@/lib/derive/util";
+import { demandBand, summarizeDemand, type DemandResult } from "@/lib/derive";
 import type {
   ColdStartForecastRequest,
   ForecastRequest,
   ForecastResponse,
   HourPoint,
+  RegionRecord,
   SiteForecastRequest,
   SiteRecord,
   Tech,
@@ -45,6 +47,28 @@ const MOCK_SITES: SiteRecord[] = [
 function pick<T>(arr: T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)];
 }
+
+/**
+ * Regional demand model metadata (GET /regions). nMAE and coverage are the
+ * measured figures from model-outputs-and-visualisation.md §2.2; VIC1 is the
+ * documented seasonal-bias limitation and must not be shown at parity.
+ * `balance_available` mirrors where POST /balance is served.
+ */
+const MOCK_REGIONS: RegionRecord[] = [
+  { region_id: "QLD1", name: "Queensland", nmae_pct: 1.84, coverage_pct: 80.2, balance_available: false, headroom_mw: 6500 },
+  { region_id: "NSW1", name: "New South Wales", nmae_pct: 2.27, coverage_pct: 82.6, balance_available: true, headroom_mw: 10000 },
+  { region_id: "SA1", name: "South Australia", nmae_pct: 3.17, coverage_pct: 84.6, balance_available: true, headroom_mw: 1610 },
+  { region_id: "TAS1", name: "Tasmania", nmae_pct: 4.15, coverage_pct: 88.8, balance_available: false, headroom_mw: 1000 },
+  {
+    region_id: "VIC1",
+    name: "Victoria",
+    nmae_pct: 4.33,
+    coverage_pct: 66.9,
+    balance_available: false,
+    headroom_mw: 4200,
+    caveat: "Seasonal bias no scalar correction reaches — do not present at parity.",
+  },
+];
 
 interface SolarProfile {
   kind: "solar";
@@ -197,6 +221,19 @@ export const mockApi = {
   async listSites(signal?: AbortSignal): Promise<SiteRecord[]> {
     await simulateLatency(signal, 120);
     return MOCK_SITES.map((s) => ({ ...s }));
+  },
+
+  async listRegions(signal?: AbortSignal): Promise<RegionRecord[]> {
+    await simulateLatency(signal, 120);
+    return MOCK_REGIONS.map((r) => ({ ...r }));
+  },
+
+  /** POST /demand stand-in — the regional band plus its planning read. */
+  async demand(region: RegionRecord, horizonH: number, signal?: AbortSignal): Promise<DemandResult> {
+    await simulateLatency(signal, 160);
+    const issue = new Date();
+    issue.setUTCMinutes(0, 0, 0);
+    return summarizeDemand(demandBand(region, issue, horizonH), region, issue.getUTCFullYear());
   },
 
   async forecast(

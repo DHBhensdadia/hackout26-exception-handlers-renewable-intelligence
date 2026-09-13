@@ -1,9 +1,12 @@
 import { config } from "@/config";
 import { mockApi } from "./mock";
+import { summarizeDemand, type DemandResult } from "@/lib/derive";
 import type {
   ColdStartForecastRequest,
+  DemandResponse,
   ForecastRequest,
   ForecastResponse,
+  RegionRecord,
   SiteForecastRequest,
   SiteRecord,
   Tech,
@@ -69,6 +72,22 @@ function realListSites(signal?: AbortSignal): Promise<SiteRecord[]> {
   return fetchJson<SiteRecord[]>(`${config.API_BASE_URL}/sites`, {}, signal);
 }
 
+function realListRegions(signal?: AbortSignal): Promise<RegionRecord[]> {
+  return fetchJson<RegionRecord[]>(`${config.API_BASE_URL}/regions`, {}, signal);
+}
+
+function realDemand(region: RegionRecord, horizonH: number, signal?: AbortSignal): Promise<DemandResult> {
+  return fetchJson<DemandResponse>(
+    `${config.API_BASE_URL}/demand`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region_id: region.region_id, horizon_h: horizonH }),
+    },
+    signal
+  ).then((resp) => summarizeDemand({ ...resp, source: "api" }, region, new Date().getUTCFullYear()));
+}
+
 export function forecast(
   req: ForecastRequest & { capacity_mw: number; tech: Tech },
   signal?: AbortSignal
@@ -78,6 +97,26 @@ export function forecast(
 
 export function listSites(signal?: AbortSignal): Promise<SiteRecord[]> {
   return config.USE_MOCK ? mockApi.listSites(signal) : realListSites(signal);
+}
+
+export function listRegions(signal?: AbortSignal): Promise<RegionRecord[]> {
+  return config.USE_MOCK ? mockApi.listRegions(signal) : realListRegions(signal);
+}
+
+/**
+ * Regional demand band. `POST /demand` is not built yet, so a real-mode 404
+ * degrades to the same deterministic model, labelled `source: "modelled"`.
+ */
+export function demandForRegion(
+  region: RegionRecord,
+  horizonH: number,
+  signal?: AbortSignal
+): Promise<DemandResult> {
+  if (config.USE_MOCK) return mockApi.demand(region, horizonH, signal);
+  return realDemand(region, horizonH, signal).catch((e: unknown) => {
+    if (isAbortError(e)) throw e;
+    return mockApi.demand(region, horizonH, signal);
+  });
 }
 
 export type { SiteForecastRequest, ColdStartForecastRequest, ForecastRequest };
