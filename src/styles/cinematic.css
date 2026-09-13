@@ -1,0 +1,415 @@
+/* ============================================================
+   Cinematic landing hero.
+
+   The poster photograph is used verbatim. The turbines that
+   rotate are composited IN FRONT of it, so the plate is never
+   retouched and overlay blades can never double the painted
+   ones. No JavaScript: the stage sizes itself to "cover" with
+   max(), and every animation runs on the compositor.
+   ============================================================ */
+
+.cine {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 520px;
+  overflow: hidden;
+  background: #0a0f14;
+  isolation: isolate;
+  --hp: 0; /* scroll progress across the hero, 0 → 1 (set by Landing.tsx) */
+}
+
+/* ---------- camera: one slow settle, then it rests ---------- */
+.cine__camera {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.14) translate3d(0, 1.2%, 0);
+  animation: cine-settle 9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  /* scroll transformation: the plate dims and its bottom is masked away, so
+     the photograph dissolves into the page rather than ending in a hard cut */
+  opacity: calc(1 - var(--hp) * 0.5);
+  -webkit-mask: linear-gradient(#000 0%, #000 56%, transparent 100%);
+  mask: linear-gradient(#000 0%, #000 56%, transparent 100%);
+}
+@keyframes cine-settle {
+  to { transform: scale(1) translate3d(0, 0, 0); }
+}
+
+/* ---------- stage: image-space box, CSS-only object-fit:cover ----------
+   1.5 is the plate aspect ratio (1920/1280). Everything inside is
+   positioned in plate coordinates, so overlays stay locked to the
+   photograph at every viewport and through the whole camera move. */
+.cine__stage {
+  --plate: 1.5;
+  --focus-x: 0.69;     /* plate x that portrait crops centre on: the hero turbine */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, calc(100svh * var(--plate)));
+  height: max(100%, calc(100vw / var(--plate)));
+  transform: translate(-50%, calc(-50% - var(--hp) * 5%)) scale(calc(1 + var(--hp) * 0.07));
+  container-type: size;
+}
+.cine__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------- turbines ----------
+   Real geometry, not a sprite: WindTurbine.obj rendered by HeroTurbines
+   into one WebGL canvas that lives inside the stage, so it inherits the
+   camera transform and stays locked to the plate. Placement, scale and
+   rotation are owned by that component; CSS only supplies the surface. */
+.cine__webgl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* ---------- clouds ----------
+   Each band holds two identical halves and travels exactly -50%,
+   so the loop point is pixel-identical to the start: no snap, no
+   teleport, no reset. Softness is baked into the gradient stops
+   rather than filter: blur(), which keeps the cost near zero. */
+.cine__weather {
+  position: absolute;
+  inset: -6% -2%;
+  pointer-events: none;
+  opacity: 1;
+  animation: cine-clear 5.4s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+  will-change: opacity, transform;
+}
+@keyframes cine-clear {
+  0%   { opacity: 1;    transform: scale(1.16) translate3d(0, 0, 0); }
+  100% { opacity: 0.42; transform: scale(1) translate3d(0, -2.5%, 0); }
+}
+
+/* The opening: cloud actually covering the scene, then parting. The bands
+   alone only ever read as haze, so the veil is what makes the first beat a
+   reveal rather than a fade-up. It clears once and never returns. */
+.cine__veil {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 34% at 22% 32%, rgba(255,255,255,1) 0%, rgba(255,253,247,0.92) 48%, rgba(255,250,240,0.72) 74%, transparent 100%),
+    radial-gradient(42% 38% at 68% 24%, rgba(255,255,255,1) 0%, rgba(255,252,244,0.90) 46%, rgba(254,248,236,0.70) 76%, transparent 100%),
+    radial-gradient(46% 40% at 44% 72%, rgba(255,255,255,1) 0%, rgba(255,251,242,0.92) 44%, rgba(253,246,232,0.74) 78%, transparent 100%),
+    linear-gradient(178deg, rgba(255,253,247,0.97) 0%, rgba(255,250,240,0.95) 52%, rgba(251,243,229,0.93) 100%);
+  animation: cine-part 4.6s cubic-bezier(0.42, 0, 0.22, 1) forwards;
+  will-change: opacity, transform;
+}
+@keyframes cine-part {
+  0%   { opacity: 1; transform: scale(1.02) translate3d(0, 0, 0); }
+  55%  { opacity: 0.52; }
+  100% { opacity: 0; transform: scale(1.1) translate3d(0, -4%, 0); }
+}
+
+.cine__band {
+  position: absolute;
+  inset: 0;
+  width: 200%;
+  animation: cine-drift var(--dur) linear infinite;
+  will-change: transform;
+}
+.cine__band > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background-repeat: no-repeat;
+}
+.cine__band > i:nth-child(2) { left: 50%; }
+@keyframes cine-drift {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.cine__band--low > i {
+  background-image:
+    radial-gradient(21% 30% at 17% 64%, rgba(255,255,255,0.95) 0%, rgba(255,250,238,0.55) 32%, rgba(255,246,228,0.18) 54%, transparent 72%),
+    radial-gradient(17% 24% at 31% 82%, rgba(255,255,255,0.88) 0%, rgba(255,249,235,0.42) 34%, transparent 70%),
+    radial-gradient(22% 26% at 50% 60%, rgba(255,253,246,0.82) 0%, rgba(255,246,228,0.34) 34%, transparent 70%),
+    radial-gradient(16% 21% at 68% 84%, rgba(255,255,255,0.90) 0%, rgba(255,250,236,0.40) 32%, transparent 70%),
+    radial-gradient(20% 27% at 84% 66%, rgba(255,253,244,0.86) 0%, rgba(255,246,228,0.36) 34%, transparent 72%);
+}
+.cine__band--mid > i {
+  background-image:
+    radial-gradient(18% 22% at 15% 34%, rgba(255,255,255,0.74) 0%, rgba(255,250,236,0.32) 34%, transparent 70%),
+    radial-gradient(15% 17% at 36% 20%, rgba(255,252,243,0.62) 0%, transparent 68%),
+    radial-gradient(20% 24% at 57% 40%, rgba(255,255,255,0.70) 0%, rgba(255,248,232,0.28) 36%, transparent 70%),
+    radial-gradient(14% 19% at 76% 26%, rgba(255,253,246,0.58) 0%, transparent 68%),
+    radial-gradient(17% 20% at 86% 46%, rgba(255,255,255,0.60) 0%, transparent 70%);
+}
+.cine__band--high > i {
+  background-image:
+    radial-gradient(22% 13% at 19% 12%, rgba(255,255,255,0.50) 0%, rgba(255,251,240,0.18) 44%, transparent 74%),
+    radial-gradient(18% 10% at 45% 7%, rgba(255,253,246,0.38) 0%, transparent 70%),
+    radial-gradient(20% 12% at 72% 14%, rgba(255,255,255,0.42) 0%, transparent 72%),
+    radial-gradient(15% 9% at 88% 6%, rgba(255,252,242,0.34) 0%, transparent 70%);
+}
+
+/* warm sunrise haze; the sun sits upper-left in the plate */
+.cine__haze {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(100% 66% at 18% 10%, rgba(255,238,192,0.34) 0%, rgba(255,224,164,0.14) 26%, transparent 60%),
+    linear-gradient(180deg, rgba(255,248,228,0.14) 0%, transparent 38%);
+}
+
+/* legibility scrim: warm and directional, never a flat black wash */
+.cine__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(96deg, rgba(18,13,6,0.66) 0%, rgba(18,13,6,0.42) 30%, rgba(18,13,6,0.10) 56%, transparent 76%),
+    linear-gradient(0deg, rgba(12,10,6,0.58) 0%, rgba(12,10,6,0.16) 26%, transparent 48%),
+    radial-gradient(120% 96% at 50% 50%, transparent 56%, rgba(8,12,16,0.30) 100%);
+}
+
+/* ---------- the only interface on the page ---------- */
+.cine__ui {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(20px, 3.4vw, 46px);
+  pointer-events: none;
+  /* scroll transformation: the interface lifts, blurs and fades away */
+  transform: translateY(calc(var(--hp) * -34px));
+  opacity: calc(1 - var(--hp) * 1.25);
+  filter: blur(calc(var(--hp) * 7px));
+  will-change: transform, opacity;
+}
+.cine__mark {
+  font-family: var(--font-nav), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+  pointer-events: auto;
+  width: fit-content;
+  padding: 6px 2px;
+  border-radius: 8px;
+}
+.cine__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.cine__cta {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.55rem;
+  border-radius: var(--r-pill, 999px);
+  background: #fff;
+  color: #10151a;
+  font-family: var(--font-nav), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  min-height: 52px;
+  box-shadow: 0 10px 34px -12px rgba(0, 0, 0, 0.7);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.22s ease, box-shadow 0.22s ease;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: cine-rise 0.85s cubic-bezier(0.16, 1, 0.3, 1) 3.2s forwards;
+}
+.cine__cta svg { width: 17px; height: 17px; flex: none; }
+.cine__cta:hover {
+  background: #f2f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.75);
+}
+.cine__cta:active { transform: translateY(0); }
+.cine__cta:focus-visible,
+.cine__mark:focus-visible {
+  outline: 3px solid #ffd88a;
+  outline-offset: 3px;
+}
+@keyframes cine-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* one quiet line of orientation, not a headline */
+.cine__note {
+  font-family: var(--font-nav), system-ui, sans-serif;
+  font-size: clamp(0.72rem, 1.05vw, 0.82rem);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  animation: cine-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 3.55s forwards;
+  max-width: 24ch;
+  line-height: 1.5;
+}
+
+/* ---------- portrait: frame the hero turbine, not the plate centre ----------
+   Centre the stage on --focus-x, clamped so the plate edge never shows. On
+   landscape screens the stage is exactly viewport-wide, so this never applies. */
+@media (max-aspect-ratio: 1/1) {
+  .cine__stage {
+    --sw: max(100%, calc(100svh * var(--plate)));
+    left: clamp(calc(100% - var(--sw) / 2),
+                calc(50% - (var(--focus-x) - 0.5) * var(--sw)),
+                calc(var(--sw) / 2));
+  }
+}
+
+/* ---------- narrow viewports: recompose, do not just shrink ---------- */
+@media (max-width: 760px) {
+  .cine__foot { flex-direction: column; align-items: stretch; }
+  .cine__cta { justify-content: center; width: 100%; }
+  .cine__note { max-width: none; }
+}
+
+/* ---------- reduced motion: keep the scene, drop the movement ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .cine__camera { animation: none; transform: none; }
+  .cine__weather {
+    animation: none;
+    opacity: 0.42;
+    transform: scale(1) translate3d(0, -2.5%, 0);
+  }
+  .cine__band { animation: none; }
+  .cine__veil { animation: none; opacity: 0; }
+  .cine__cta,
+  .cine__note { animation: none; opacity: 1; transform: none; }
+  .cine__cta { transition: background-color 0.2s ease; }
+  .cine__cta:hover { transform: none; }
+}
+
+/* screen-reader-only heading: page structure without visible text */
+.cine .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   MERGE LAYER
+   The cinematic hero dissolves through a gradient seam into the
+   existing marketing page so the two designs read as a single,
+   continuously scrolled surface instead of two stitched sites.
+   ============================================================ */
+
+/* the seam — fades the bottom of the photograph into --bg */
+.cine__blend {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(180px, 38vh, 420px);
+  z-index: 1;
+  pointer-events: none;
+  /* warm sunrise tone settling into the app background, so the plate and the
+     dark marketing surface share one continuous gradient */
+  background:
+    radial-gradient(120% 80% at 18% 0%, rgba(255, 238, 192, 0.10) 0%, transparent 62%),
+    linear-gradient(
+      180deg,
+      rgba(8, 9, 10, 0) 0%,
+      rgba(14, 12, 10, 0.20) 34%,
+      rgba(11, 11, 12, 0.58) 66%,
+      var(--bg) 100%
+    );
+  opacity: calc(0.82 + var(--hp) * 0.4);
+}
+
+/* scroll cue, centred below the CTA row */
+.cine__scroll {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(16px, 3vw, 38px);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-decoration: none;
+  pointer-events: auto;
+  opacity: 0;
+  animation: cine-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 4s forwards;
+}
+.cine__scroll-line {
+  position: relative;
+  width: 1px;
+  height: 34px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.8));
+}
+.cine__scroll-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform: translateY(-100%);
+  animation: cine-scroll-dot 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes cine-scroll-dot {
+  0% { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(100%); }
+}
+@media (max-width: 760px) {
+  .cine__scroll { display: none; }
+}
+
+/* the marketing surface below the hero */
+.landing-merge {
+  position: relative;
+  z-index: 2;
+  padding-top: clamp(56px, 8vw, 112px);
+  background: var(--bg);
+}
+
+/* fixed nav yields to the cinematic hero, then drops in past it */
+.nav {
+  transition: padding var(--t-base) var(--ease),
+              opacity 0.5s var(--ease),
+              transform 0.5s var(--ease);
+}
+.nav--hidden {
+  opacity: 0;
+  transform: translateY(-18px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cine__scroll { animation: none; opacity: 1; }
+  .cine__scroll-line::after { animation: none; }
+}

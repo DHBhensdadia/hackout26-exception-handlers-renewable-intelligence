@@ -9,7 +9,7 @@ const NAV_LINKS: { to: string; label: string }[] = [
   { to: "/#modules", label: "Modules" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ hidden = false }: { hidden?: boolean }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(() => typeof window !== "undefined" && window.scrollY > 24);
@@ -26,7 +26,7 @@ export function SiteHeader() {
   };
 
   return (
-    <header className={["nav", open && "open", scrolled && "nav--scrolled"].filter(Boolean).join(" ")} id="nav">
+    <header className={["nav", open && "open", scrolled && "nav--scrolled", hidden && "nav--hidden"].filter(Boolean).join(" ")} id="nav">
       <div className="nav__inner">
         <Link to="/" className="brand" aria-label="re-forecast home">
           re-forecast

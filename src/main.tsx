@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/global.css";
 import "./styles/dashboard.css";
+import "./styles/cinematic.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/Shell";
 
