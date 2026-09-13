@@ -157,5 +157,7 @@ export function useDashboard() {
     if (violations.length) console.warn("[derive] invariant violations:", violations);
   }, [result, derived]);
 
-  return { sites, form, patch, run, pickSite, result, loading, error, derived, jsonPreview };
+  // `site` is exposed so panels that talk to the backend directly - the regional balance -
+  // can read the selected site's market region without recomputing the resolution logic.
+  return { sites, site, form, patch, run, pickSite, result, loading, error, derived, jsonPreview };
 }

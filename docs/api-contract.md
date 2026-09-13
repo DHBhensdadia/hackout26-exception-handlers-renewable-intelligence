@@ -43,8 +43,8 @@ bound would procure for a shortfall the fleet does not have.
 | `POST /forecast` | **Live** | Unchanged from Phase 1 |
 | `GET /sites` | **Live** | |
 | `GET /health` | **Live** | Being extended, additively |
-| `GET /regions` | **Ready** | Shape frozen, fixture available |
-| `POST /balance` | **Ready** | Shape frozen, fixture available |
+| `GET /regions` | **Live** | Includes `balance_available` per region |
+| `POST /balance` | **Live** | Serves a precomputed replay window; see `data_mode` |
 | `POST /storage/dispatch` | **Planned** | Shape below is provisional |
 | `GET /alerts` | **Planned** | May be cut; `/balance` carries the same information |
 | `GET /seasonal/{region}` | **Cut from Phase 2** | Do not design screens around it |
@@ -166,6 +166,30 @@ probabilities. See [`fixtures/balance.json`](fixtures/balance.json).
 ```json
 {"region": "SA1", "horizon_h": 72}
 ```
+
+### Read `data_mode` before you label anything
+
+The response carries `data_mode`, and today it is `"replay"`.
+
+The demand model needs load at the issue time and at 24 and 168 hours before it, and the
+AEMO market ingest currently ends before the present. So the served window is a **real
+72-hour window replayed from held-out history** — real forecasts as they stood at that
+issue time, against real metered demand. Every number in it happened; none of it is a
+forecast for tonight.
+
+Show `issue_time_utc` and say "replay" wherever this data appears. When the ingest runs to
+the present, `data_mode` becomes `"live"` and nothing else about the payload changes.
+
+Because it *is* history, the payload also carries `actual[]` — what really happened, hour
+by hour. That lets a panel show whether the band contained the outcome, which is the one
+thing a live forecast can never show.
+
+| Field | Meaning |
+|---|---|
+| `data_mode` | `"replay"` or `"live"`. Never present a replay as a forecast |
+| `data_note` | Human-readable explanation, safe to show verbatim |
+| `actual[]` | `{valid_time_utc, renewable_mw, demand_mw, residual_mw}` — outcome, replay only |
+| `horizon_h` | Echo of the request; `points` and `actual` are trimmed to it |
 
 **Response:**
 

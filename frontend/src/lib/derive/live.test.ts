@@ -160,3 +160,56 @@ describe("derived layer against the live API", () => {
     }
   });
 });
+
+describe("regional balance from the backend", () => {
+  it("serves a calibrated window whose band held against the outcome", async () => {
+    if (!reachable) return;
+    const res = await fetch(`${BASE}/balance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region: "SA1", horizon_h: 72 }),
+    });
+    expect(res.ok).toBe(true);
+    const d = (await res.json()) as import("@/types").BalanceResponse;
+
+    expect(d.region).toBe("SA1");
+    expect(d.points).toHaveLength(72);
+    expect(d.actual).toHaveLength(72);
+    expect(d.data_mode).toBe("replay");
+
+    for (const p of d.points) {
+      expect(p.p_surplus).toBeGreaterThanOrEqual(0);
+      expect(p.p_surplus).toBeLessThanOrEqual(1);
+      expect(p.renewable_p10_mw).toBeLessThanOrEqual(p.renewable_p50_mw);
+      expect(p.renewable_p50_mw).toBeLessThanOrEqual(p.renewable_p90_mw);
+      // expected = probability x conditional, the identity the contract promises.
+      expect(p.expected_surplus_mw).toBeCloseTo(p.p_surplus * p.conditional_surplus_mw, 1);
+    }
+
+    // A replay knows its own answer, so check the band actually contained it.
+    const actual = new Map(d.actual.map((a) => [a.valid_time_utc, a.renewable_mw]));
+    const inside = d.points.filter((p) => {
+      const a = actual.get(p.valid_time_utc)!;
+      return a >= p.renewable_p10_mw && a <= p.renewable_p90_mw;
+    }).length;
+    expect(inside / d.points.length).toBeGreaterThan(0.6);
+  }, TIMEOUT);
+
+  it("rejects a region with no precomputed window", async () => {
+    if (!reachable) return;
+    const res = await fetch(`${BASE}/balance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region: "NOWHERE" }),
+    });
+    expect(res.status).toBe(404);
+  }, TIMEOUT);
+
+  it("lists regions with balance availability", async () => {
+    if (!reachable) return;
+    const regions = (await (await fetch(`${BASE}/regions`)).json()) as import("@/types").RegionRecord[];
+    expect(regions.length).toBeGreaterThan(0);
+    expect(regions.every((r) => typeof r.balance_available === "boolean")).toBe(true);
+    expect(regions.some((r) => r.balance_available)).toBe(true);
+  }, TIMEOUT);
+});

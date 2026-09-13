@@ -48,6 +48,9 @@ credentials.json
 #   python -m reip.ingest.build_corpus ...        # weather from open-meteo.com
 #
 data/*
+!data/canonical/
+data/canonical/*
+!data/canonical/balance_*.json
 !data/.gitkeep
 
 # Third-party datasets dropped in by hand. Licensing varies by source and none of

@@ -13,17 +13,25 @@ import json
 import logging
 from datetime import UTC, datetime
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from reip.config import MODEL_VERSION, get_settings
 from reip.ingest.openmeteo import WeatherUnavailable, fetch_forecast
 from reip.models.predict import ArtifactMissing, load_model, predict_site
-from reip.schemas import ForecastRequest, SiteForecast, SiteMeta, Tech
+from reip.schemas import (
+    MAX_HORIZON_H,
+    MIN_HORIZON_H,
+    ForecastRequest,
+    SiteForecast,
+    SiteMeta,
+    Tech,
+)
 from reip.sites.registry import SiteNotFound, SiteRegistry
 
 log = logging.getLogger(__name__)
@@ -163,6 +171,85 @@ def sites() -> list[dict[str, Any]]:
         }
         for s in registry().all()
     ]
+
+
+@app.get("/regions")
+def regions() -> list[dict[str, Any]]:
+    """Market regions with installed capacity, for a region selector."""
+    available = {p.stem.removeprefix("balance_") for p in _balance_files()}
+    out = []
+    for code in registry().regions():
+        entry: dict[str, Any] = {"region": code, "technologies": {}, "balance_available": code in available}
+        total = 0.0
+        for tech in Tech:
+            group = registry().by_region(code, tech)
+            if not group:
+                continue
+            capacity = round(sum(s.capacity_mw for s in group), 1)
+            total += capacity
+            entry["technologies"][tech.value] = {"sites": len(group), "capacity_mw": capacity}
+        entry["total_capacity_mw"] = round(total, 1)
+        out.append(entry)
+    return out
+
+
+def _balance_files() -> list[Path]:
+    from reip.balance.precompute import artifact_path
+
+    directory = artifact_path("X").parent
+    return sorted(directory.glob("balance_*.json")) if directory.exists() else []
+
+
+@lru_cache(maxsize=8)
+def _load_balance(region: str) -> dict:
+    from reip.balance.precompute import artifact_path
+
+    path = artifact_path(region)
+    if not path.exists():
+        raise FileNotFoundError(region)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+class BalanceRequest(BaseModel):
+    """POST /balance body."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    region: str
+    horizon_h: int = Field(default=MAX_HORIZON_H, ge=MIN_HORIZON_H, le=MAX_HORIZON_H)
+
+
+@app.post("/balance")
+def regional_balance(request: BalanceRequest) -> dict[str, Any]:
+    """Regional generation against regional demand, as calibrated probabilities.
+
+    Served from a precomputed window rather than computed per request. One window means
+    forecasting every plant in the region, drawing a coherent ensemble across all of them
+    and forecasting demand - minutes of work, and not something to do inside an HTTP call.
+
+    The window is a replay of real held-out history; `data_mode` says so in the payload.
+    The demand model needs load at the issue time, and the market corpus ends before today,
+    so there is no honest way to serve tonight until that ingest runs to the present.
+    """
+    region = request.region.strip().upper()
+    try:
+        payload = dict(_load_balance(region))
+    except FileNotFoundError:
+        known = sorted(p.stem.removeprefix("balance_") for p in _balance_files())
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"no balance window for region {region!r}; available: {known or 'none - run '
+                'python -m reip.balance.precompute'}"
+            ),
+        ) from None
+
+    # Trim to the requested horizon rather than ignoring it: the dashboard's horizon control
+    # should do something, and the points are already ordered by lead time.
+    payload["points"] = payload["points"][: request.horizon_h]
+    payload["actual"] = payload.get("actual", [])[: request.horizon_h]
+    payload["horizon_h"] = request.horizon_h
+    return payload
 
 
 @app.post("/forecast", response_model=SiteForecast)

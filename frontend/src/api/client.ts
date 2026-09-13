@@ -1,9 +1,11 @@
 import { config } from "@/config";
 import { mockApi } from "./mock";
 import type {
+  BalanceResponse,
   ColdStartForecastRequest,
   ForecastRequest,
   ForecastResponse,
+  RegionRecord,
   SiteForecastRequest,
   SiteRecord,
   Tech,
@@ -81,3 +83,36 @@ export function listSites(signal?: AbortSignal): Promise<SiteRecord[]> {
 }
 
 export type { SiteForecastRequest, ColdStartForecastRequest, ForecastRequest };
+
+
+/**
+ * Regional balance: generation against demand, as calibrated probabilities.
+ *
+ * Distinct from the client-side `computeBalance` in `lib/derive`, which models a single
+ * site against a synthetic demand curve. This is the whole region against real metered
+ * demand, aggregated from 200 coherent scenarios - and crucially not a sum of per-site
+ * quantiles, which would overstate regional uncertainty by roughly threefold.
+ *
+ * There is no mock. The shape is large and the point of it is that the numbers are real;
+ * a hand-written stand-in would be the one thing this panel must not show. When the API is
+ * unavailable the panel says so instead.
+ */
+export function regionalBalance(
+  region: string,
+  horizonH: number,
+  signal?: AbortSignal
+): Promise<BalanceResponse> {
+  return fetchJson<BalanceResponse>(
+    `${config.API_BASE_URL}/balance`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ region, horizon_h: horizonH }),
+    },
+    signal
+  );
+}
+
+export function listRegions(signal?: AbortSignal): Promise<RegionRecord[]> {
+  return fetchJson<RegionRecord[]>(`${config.API_BASE_URL}/regions`, {}, signal);
+}
