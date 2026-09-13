@@ -5,6 +5,5 @@ export * from "./balance";
 export * from "./reliability";
 export * from "./seasonal";
 export * from "./demand";
-export * from "./capacity";
 export * from "./investment";
 export * from "./verify";

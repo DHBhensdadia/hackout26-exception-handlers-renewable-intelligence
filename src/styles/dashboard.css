@@ -154,51 +154,6 @@
   align-content: start;
 }
 
-/* ---------- module page ---------- */
-.module__flow { display: grid; gap: 1.4rem; }
-
-@media (max-width: 1080px) {
-  .shell { grid-template-columns: 1fr; }
-  .shell__bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    padding: 0.6rem 1rem;
-    background: var(--bg);
-    border-bottom: 1px solid var(--hairline);
-  }
-  .shell__bar-title {
-    font-family: var(--font-heading);
-    font-weight: var(--w-semi);
-    font-size: 0.92rem;
-  }
-  .shell__icon-btn {
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-    background: var(--surface-2);
-    border: 1px solid var(--hairline-strong);
-    border-radius: 8px;
-    color: var(--text);
-    cursor: pointer;
-  }
-  .shell__icon-btn:last-child { margin-left: auto; }
-  .shell__icon-btn:disabled { opacity: 0.55; cursor: default; }
-  .sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: min(280px, 82vw);
-    transform: translateX(-100%);
-    transition: transform var(--t-base) var(--ease);
-  }
-  .sidebar.open { transform: translateX(0); }
-  .shell__content { padding: 1.4rem 1rem 4rem; }
-}
-
 
 .rail__json { margin-top: 1.2rem; }
 .rail__json summary {
@@ -431,52 +386,157 @@
   width: 100%;
 }
 
-/* ---------- §05 seasonal ---------- */
-.seasonal {
+/* ---------- regional modules (§05 seasonal · §06 demand) ---------- */
+.regional__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+.regional__lead {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text);
+  max-width: 88ch;
+  margin-bottom: 0.4rem;
+}
+
+/* region selector — reference console's .tabs__nav rhythm */
+.rpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: 4px;
+  width: fit-content;
+}
+.rpick button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  padding: 0.42rem 0.75rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+.rpick button:hover:not(.active) { color: var(--text); }
+.rpick button.active {
+  color: var(--text);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+}
+.rpick__flag {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c-amber);
+}
+
+/* month × hour climatology */
+.heatwrap {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1.3rem;
+}
+.heat-scroll { overflow-x: auto; }
+.heat {
+  display: grid;
+  grid-template-columns: 46px repeat(24, minmax(0, 1fr));
   gap: 1px;
   background: var(--hairline);
-  border-block: 1px solid var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  min-width: 760px;
 }
-.seasonal__col {
-  background: var(--bg);
-  padding: 0.7rem 0.5rem 0.6rem;
-  display: flex;
-  flex-direction: column;
+.heat__corner,
+.heat__hcol,
+.heat__row,
+.heat__cell { background: var(--bg-elevated); }
+.heat__hcol,
+.heat__row {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  display: grid;
   align-items: center;
-  gap: 0.5rem;
+  min-height: 22px;
 }
-.seasonal__col--surplus { background: rgba(76, 183, 130, 0.05); }
-.seasonal__col--shortage { background: rgba(235, 94, 87, 0.05); }
-.seasonal__m {
+.heat__hcol { place-items: center; }
+.heat__row { justify-items: start; padding-left: 0.5rem; }
+.heat__cell {
+  border: 0;
+  padding: 0;
+  cursor: crosshair;
+  transition: box-shadow var(--t-fast);
+}
+.heat__cell:hover,
+.heat__cell:focus-visible { box-shadow: inset 0 0 0 1px var(--text); }
+.heat__read {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  min-height: 1.2em;
+}
+
+/* region confidence — reference .itable rhythm */
+.rtable {
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--hairline);
+}
+.rtable__head,
+.rtable__row {
+  display: grid;
+  grid-template-columns: 64px minmax(120px, 1.2fr) 74px 84px minmax(0, 1.8fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--hairline);
+  width: 100%;
+}
+.rtable__head {
   font-family: var(--font-mono);
   font-size: 0.62rem;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.seasonal__bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  height: 84px;
-  width: 100%;
-}
-.sb { width: 8px; }
-.sb--gen { background: var(--accent-2); }
-.sb--dem { background: var(--text-muted); opacity: 0.5; }
-.seasonal__v {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
+.rtable__row {
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  text-align: left;
+  font-size: 0.8rem;
   color: var(--text-secondary);
+  cursor: pointer;
 }
-@media (max-width: 860px) {
-  .seasonal { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
-@media (max-width: 520px) {
-  .seasonal { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rtable__row:hover { background: var(--surface-2); }
+.rtable__row.on { background: var(--surface-2); }
+.rtable__id { font-family: var(--font-mono); color: var(--text); }
+.rtable__row.on .rtable__id { color: var(--accent-2); }
+.rtable__n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.rtable__n--ok { color: var(--c-green); }
+.rtable__n--warn { color: var(--c-amber); }
+.rtable__n--bad { color: var(--c-red); }
+.rtable__muted { font-size: 0.72rem; color: var(--text-muted); }
+.rtable__caveat { font-size: 0.72rem; color: var(--c-amber); }
+.panel-note--warn { color: var(--c-amber); }
+@media (max-width: 760px) {
+  .rtable__head { display: none; }
+  .rtable__row { grid-template-columns: 58px 1fr auto; gap: 0.4rem 0.7rem; }
+  .rtable__caveat,
+  .rtable__muted { grid-column: 1 / -1; }
 }
 
 /* ---------- §06 capacity ---------- */
