@@ -1,7 +1,29 @@
 import type { ForecastResponse, SiteRecord } from "@/types";
-import { clamp, hash01, hourLabel, round } from "./util";
+import { hourLabel, round } from "./util";
 
-export interface ReliabilityDriver {
+/**
+ * Module 4 — operating conditions, and an honest account of what is missing.
+ *
+ * This module used to return a "risk index" seeded from `hash01(site_id)`, with a soiling
+ * indicator that was a hash coin-flip. The numbers looked like model output and were not:
+ * the same site always scored the same, because the score was a property of its name.
+ *
+ * There is no equipment reliability model behind this platform, and that is deliberate
+ * rather than pending. Reliability analysis needs failure records, maintenance logs and
+ * component histories, and none of that is public for these plants. The one available
+ * substitute — outages inferred from gaps in SCADA — conflates genuine equipment failure
+ * with curtailment, network constraint and economic withholding, and in a high-curtailment
+ * region the latter dominate. A "failure risk" built that way would largely be measuring
+ * negative prices. The project specification is explicit about this (§26): the system
+ * should not claim that a failure can always be predicted.
+ *
+ * What *is* real is everything derivable from the forecast itself — how hard the plant is
+ * being driven, how violently its output is about to change, how long it sits against its
+ * export limit. Those are operating conditions, not failure probabilities, and they are
+ * worth showing under that name. They are what survives here.
+ */
+
+export interface OperatingSignal {
   label: string;
   value: string;
   note: string;
@@ -14,102 +36,116 @@ export interface MaintenanceWindow {
 }
 
 export interface ReliabilityResult {
-  risk: number;
-  band: "low" | "moderate" | "elevated";
-  tone: "ok" | "warn" | "bad";
-  drivers: ReliabilityDriver[];
-  expectedLossMwh: number;
+  /** Observable stress indicators, each computed from the forecast series. */
+  signals: OperatingSignal[];
+  /** Quietest four-hour block — when intervention costs the least generation. */
   maintenanceWindow: MaintenanceWindow | null;
-  note: string;
+  /** Generation that would be lost if the plant were offline for that window. */
+  windowLossMwh: number;
+  /** Why there is no risk score here. Shown, not hidden in a tooltip. */
+  unavailable: string;
 }
 
-const bandOf = (risk: number): Pick<ReliabilityResult, "band" | "tone"> =>
-  risk < 0.25
-    ? { band: "low", tone: "ok" }
-    : risk < 0.42
-      ? { band: "moderate", tone: "warn" }
-      : { band: "elevated", tone: "bad" };
+const MAINTENANCE_HOURS = 4;
 
-/** Lowest 4-hour generation window inside the horizon — the safest maintenance slot. */
-function maintenanceWindow(forecast: ForecastResponse): MaintenanceWindow | null {
-  const pts = forecast.points;
-  if (pts.length < 4) return null;
+/** Quietest window in the horizon — the cheapest hours to take a plant offline. */
+function maintenanceWindow(
+  forecast: ForecastResponse
+): { window: MaintenanceWindow; lossMwh: number } | null {
+  const points = forecast.points;
+  if (points.length < MAINTENANCE_HOURS) return null;
+
   let best = 0;
   let bestSum = Infinity;
-  for (let i = 0; i <= pts.length - 4; i++) {
-    const sum = pts.slice(i, i + 4).reduce((a, p) => a + p.p50_mw, 0);
+  for (let i = 0; i <= points.length - MAINTENANCE_HOURS; i++) {
+    const sum = points
+      .slice(i, i + MAINTENANCE_HOURS)
+      .reduce((total, p) => total + p.p50_mw, 0);
     if (sum < bestSum) {
       bestSum = sum;
       best = i;
     }
   }
   return {
-    start: hourLabel(pts[best].valid_time_utc),
-    end: hourLabel(pts[best + 3].valid_time_utc),
-    label: `lowest output · ${round(bestSum, 1)} MWh over 4 h`,
+    window: {
+      start: hourLabel(points[best].valid_time_utc),
+      end: hourLabel(points[best + MAINTENANCE_HOURS - 1].valid_time_utc),
+      label: `quietest ${MAINTENANCE_HOURS} h in the horizon`,
+    },
+    lossMwh: round(bestSum, 1),
   };
 }
 
-/**
- * Module 4 — equipment reliability & failure risk (spec §10).
- * Risk scoring and preparedness, never a claim of failure prediction.
- */
-export function reliabilityModel(forecast: ForecastResponse, site: SiteRecord): ReliabilityResult {
-  const pts = forecast.points;
-  const cap = site.capacity_mw;
-  const base = 0.12 + hash01(site.site_id + ":risk") * 0.14;
-  const drivers: ReliabilityDriver[] = [];
-  let risk = base;
+export function reliabilityModel(
+  forecast: ForecastResponse,
+  site: SiteRecord
+): ReliabilityResult {
+  const points = forecast.points;
+  const capacity = Math.max(forecast.capacity_mw, 1);
+  const signals: OperatingSignal[] = [];
 
-  if (site.tech === "wind") {
-    let maxJump = 0;
-    let jumpHour = 0;
-    for (let i = 1; i < pts.length; i++) {
-      const jump = Math.abs(pts[i].physics_mw - pts[i - 1].physics_mw);
-      if (jump > maxJump) {
-        maxJump = jump;
-        jumpHour = i;
-      }
+  // Hours spent at or near rated output. Sustained full-load running is a real operating
+  // stress and is directly observable; it is not a failure probability.
+  const nearRated = points.filter((p) => p.p50_mw >= 0.9 * capacity).length;
+  signals.push({
+    label: "Hours near rated output",
+    value: `${nearRated} / ${points.length}`,
+    note: "p50 above 90% of nameplate",
+  });
+
+  // Largest hour-to-hour swing. Ramps are what mechanical and inverter systems actually
+  // have to follow.
+  let maxRamp = 0;
+  let rampAt = "";
+  for (let i = 1; i < points.length; i++) {
+    const delta = Math.abs(points[i].p50_mw - points[i - 1].p50_mw);
+    if (delta > maxRamp) {
+      maxRamp = delta;
+      rampAt = points[i].valid_time_utc;
     }
-    const nearRated = pts.filter((p) => p.p90_mw > cap * 0.9).length;
-    drivers.push(
-      { label: "Gust exposure", value: `${maxJump.toFixed(1)} MW/h`, note: `peak swing at +${jumpHour} h` },
-      { label: "Near-rated hours", value: `${nearRated} h`, note: "p90 within 10 % of capacity" },
-      {
-        label: "Cut-out proximity",
-        value: nearRated > 6 ? "elevated" : "low",
-        note: "turbine protection threshold",
-      },
-    );
-    risk += (nearRated / Math.max(1, pts.length)) * 0.28 + (maxJump / Math.max(1, cap)) * 0.22;
+  }
+  signals.push({
+    label: "Steepest ramp",
+    value: `${round(maxRamp, 1)} MW/h`,
+    note: rampAt ? `${round((100 * maxRamp) / capacity, 0)}% of nameplate · ${hourLabel(rampAt)}` : "—",
+  });
+
+  // Solar only: hours the forecast sits against the clear-sky ceiling, which is where
+  // inverter clipping happens on an oversized array.
+  if (site.tech === "solar") {
+    const clipped = points.filter(
+      (p) => p.clearsky_mw > 0 && p.p50_mw >= 0.98 * Math.min(p.clearsky_mw, capacity)
+    ).length;
+    signals.push({
+      label: "Hours at the ceiling",
+      value: `${clipped} / ${points.length}`,
+      note: "output against the clear-sky limit",
+    });
   } else {
-    const peak = pts.reduce((a, b) => (b.clearsky_mw > a.clearsky_mw ? b : a), pts[0]);
-    const derate = peak.clearsky_mw > 0 ? 1 - peak.p50_mw / peak.clearsky_mw : 0;
-    const clipping = pts.filter((p) => p.clearsky_mw > cap * 0.98).length;
-    drivers.push(
-      { label: "Heat / cloud derate", value: `${(derate * 100).toFixed(0)} %`, note: "gap vs clearsky at peak hour" },
-      { label: "Clipping hours", value: `${clipping} h`, note: "clearsky above inverter limit" },
-      {
-        label: "Soiling risk",
-        value: hash01(site.site_id + ":soiling") > 0.5 ? "moderate" : "low",
-        note: "seasonal dust / monsoon wash-off",
-      },
+    // Wind only: forecast spread is widest where the power curve is steepest, which is
+    // also where a turbine's control system works hardest.
+    const widest = points.reduce(
+      (best, p) => (p.p90_mw - p.p10_mw > best.p90_mw - best.p10_mw ? p : best),
+      points[0]
     );
-    risk += Math.min(0.2, derate * 0.2) + (clipping / Math.max(1, pts.length)) * 0.1;
+    signals.push({
+      label: "Least predictable hour",
+      value: `${round(widest.p90_mw - widest.p10_mw, 1)} MW band`,
+      note: hourLabel(widest.valid_time_utc),
+    });
   }
 
-  risk = clamp(risk, 0.05, 0.6);
-  const { band, tone } = bandOf(risk);
-  const expectedLossMwh = round(cap * risk * 0.08 * (pts.length / 24), 1);
-  const window = maintenanceWindow(forecast);
+  const maintenance = maintenanceWindow(forecast);
 
   return {
-    risk: round(risk, 2),
-    band,
-    tone,
-    drivers,
-    expectedLossMwh,
-    maintenanceWindow: window,
-    note: "Risk scoring only — the system does not claim to predict failures.",
+    signals,
+    maintenanceWindow: maintenance?.window ?? null,
+    windowLossMwh: maintenance?.lossMwh ?? 0,
+    unavailable:
+      "No equipment risk score is shown because there is no model behind one. Reliability " +
+      "analysis needs failure records, maintenance logs and component histories, none of " +
+      "which are public for these plants; outages inferred from SCADA gaps would conflate " +
+      "equipment failure with curtailment and economic withholding. The figures above are " +
+      "operating conditions read from the forecast, not failure probabilities.",
   };
 }

@@ -2,34 +2,60 @@ import type { ForecastResponse } from "@/types";
 import type { DerivedDashboard } from "@/hooks/useDashboard";
 import { Cell, CellGrid } from "../ui/CellGrid";
 
-const toneColor = (tone: "ok" | "warn" | "bad") =>
-  tone === "bad" ? "var(--c-red)" : tone === "warn" ? "var(--c-amber)" : "var(--c-green)";
-
-/** §04 — Module 4: equipment reliability & failure risk (spec §10). */
-export function ReliabilityPanel({ forecast, derived }: { forecast: ForecastResponse; derived: DerivedDashboard }) {
+/**
+ * §04 — Module 4: operating conditions, and the gap where a reliability model would be.
+ *
+ * The panel previously led with a "Risk index" and "Generation at risk", both derived from
+ * a hash of the site id. They are gone. What is shown instead is what can honestly be read
+ * off the forecast — how hard the plant is being driven and when it is quietest — plus a
+ * plain statement of why there is no risk score, because an absence explained reads as
+ * rigour and an absence papered over reads as a number.
+ */
+export function ReliabilityPanel({
+  forecast,
+  derived,
+}: {
+  forecast: ForecastResponse;
+  derived: DerivedDashboard;
+}) {
   const r = derived.reliability;
-  const start = r.maintenanceWindow ? r.maintenanceWindow.start.replace(" UTC", "") : "—";
 
   return (
     <>
       <CellGrid columns={4}>
-        <Cell k="Risk index" v={r.risk.toFixed(2)} note={`${r.band} band`} accent={toneColor(r.tone)} />
-        <Cell k="Generation at risk" v={`≈${r.expectedLossMwh} MWh`} note="over this horizon" />
-        <Cell k="Maintenance slot" v={start} note={r.maintenanceWindow?.label ?? "horizon too short"} />
-        <Cell k="Horizon scored" v={`${forecast.points.length} h`} note="risk evaluated hourly" />
+        {r.signals.map((s) => (
+          <Cell key={s.label} k={s.label} v={s.value} note={s.note} />
+        ))}
+        <Cell
+          k="Quietest window"
+          v={r.maintenanceWindow ? r.maintenanceWindow.start : "—"}
+          note={
+            r.maintenanceWindow
+              ? `${r.windowLossMwh} MWh forgone over 4 h`
+              : "horizon too short"
+          }
+          accent="var(--c-blue)"
+        />
       </CellGrid>
 
-      <div className="rows">
-        {r.drivers.map((d) => (
-          <div className="row" key={d.label}>
-            <span className="row__k">{d.label}</span>
-            <span className="row__v">{d.value}</span>
-            <span className="row__n">{d.note}</span>
-          </div>
-        ))}
+      <div className="notes-grid">
+        <div className="note-row">
+          <span className="note-row__k">Horizon</span>
+          <span className="note-row__v">
+            {forecast.points.length} h · conditions read from the forecast series
+          </span>
+        </div>
+        <div className="note-row">
+          <span className="note-row__k">Maintenance</span>
+          <span className="note-row__v">
+            {r.maintenanceWindow
+              ? `${r.maintenanceWindow.start} to ${r.maintenanceWindow.end} — ${r.maintenanceWindow.label}`
+              : "No window inside this horizon."}
+          </span>
+        </div>
       </div>
 
-      <p className="panel-note">{r.note}</p>
+      <p className="module-note">{r.unavailable}</p>
     </>
   );
 }

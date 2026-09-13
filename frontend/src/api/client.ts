@@ -1,5 +1,6 @@
 import { config } from "@/config";
 import { mockApi } from "./mock";
+import { seasonalCells } from "@/lib/derive/seasonal";
 import { summarizeDemand, type DemandResult } from "@/lib/derive";
 import type {
   BalanceResponse,
@@ -9,6 +10,8 @@ import type {
   ForecastResponse,
   RegionCapacity,
   RegionRecord,
+  SeasonalCell,
+  SeasonalResponse,
   SiteForecastRequest,
   SiteRecord,
   Tech,
@@ -161,4 +164,78 @@ export function regionalBalance(
  */
 export function listRegionCapacity(signal?: AbortSignal): Promise<RegionCapacity[]> {
   return fetchJson<RegionCapacity[]>(`${config.API_BASE_URL}/regions`, {}, signal);
+}
+
+
+/** What `GET /seasonal/{region}` actually returns, before it is adapted. */
+interface SeasonalApiResponse {
+  region: string;
+  years_of_history: number;
+  data_mode: string;
+  grids: Record<string, (number | null)[][]>;
+  storage: { targets: Record<string, { energy_mwh: number } | null> };
+}
+
+/**
+ * Seasonal climatology from the backend, adapted to the shape the panel consumes.
+ *
+ * Two conventions flip on the way across, and both would be silent if missed:
+ *
+ * The API's `residual_mw` is `demand - renewable`, so **negative means surplus**. The panel
+ * treats `residual_mwh > 0` as surplus. The sign is inverted here, once, rather than in
+ * each component that reads it.
+ *
+ * The API indexes months 1-12; the panel indexes 0-11.
+ *
+ * `storage_to_absorb_mwh` is read off the 80% capture target rather than the 95% one: the
+ * curve knees hard, and the last few percent of surplus costs several times the battery
+ * that the first eighty do.
+ */
+function realSeasonal(region: RegionRecord, signal?: AbortSignal): Promise<SeasonalResponse> {
+  return fetchJson<SeasonalApiResponse>(
+    `${config.API_BASE_URL}/seasonal/${encodeURIComponent(region.region_id)}`,
+    {},
+    signal
+  ).then((resp) => {
+    const residual = resp.grids.residual_mw ?? [];
+    const share = resp.grids.surplus_share ?? [];
+    const cells: SeasonalCell[] = [];
+
+    for (let m = 0; m < 12; m++) {
+      for (let h = 0; h < 24; h++) {
+        const raw = residual[m]?.[h];
+        cells.push({
+          month: m,
+          hour: h,
+          // Sign flipped: surplus-positive, which is what the panel expects.
+          residual_mwh: raw == null ? 0 : Math.round(-raw),
+          surplus_pct: share[m]?.[h] ?? 0,
+        });
+      }
+    }
+
+    const target = resp.storage?.targets?.["80pct"];
+    return {
+      region_id: resp.region,
+      window_years: Math.round(resp.years_of_history),
+      source: `AEMO ${resp.data_mode} history, ${resp.years_of_history.toFixed(1)} years`,
+      cells,
+      storage_to_absorb_mwh: target ? Math.round(target.energy_mwh) : 0,
+    };
+  });
+}
+
+/**
+ * Seasonal patterns. Falls back to the in-browser climatology if the endpoint is absent,
+ * the same way `demandForRegion` does, so the demo survives a backend that is not running.
+ */
+export function seasonalForRegion(
+  region: RegionRecord,
+  signal?: AbortSignal
+): Promise<SeasonalResponse> {
+  if (config.USE_MOCK) return Promise.resolve(seasonalCells(region));
+  return realSeasonal(region, signal).catch((e: unknown) => {
+    if (isAbortError(e)) throw e;
+    return seasonalCells(region);
+  });
 }

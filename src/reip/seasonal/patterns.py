@@ -116,6 +116,24 @@ def _energy_share(renewable: pd.Series, demand: pd.Series) -> float:
     return float(renewable.sum()) / total_demand
 
 
+def surplus_share_grid(block: pd.DataFrame) -> list[list[float]]:
+    """Month x hour fraction of hours that were in surplus, 0 to 1.
+
+    Distinct from the mean surplus MW in the same cell: an hour that is hugely in surplus
+    one year in three reads as a large mean and a small frequency, and a planner wants to
+    know which of those it is looking at.
+    """
+    grouped = (
+        block.assign(is_surplus=(block["surplus_mw"] > 0).astype("float64"))
+        .groupby(["month", "local_hour"])["is_surplus"]
+        .mean()
+        .unstack("local_hour")
+        .reindex(index=range(1, 13), columns=range(24))
+        .astype("float64")
+    )
+    return [[None if pd.isna(v) else round(float(v), 4) for v in row] for row in grouped.to_numpy()]
+
+
 def share_grid(block: pd.DataFrame) -> list[list[float]]:
     """Month x hour renewable share, as an energy ratio per cell."""
     grouped = block.groupby(["month", "local_hour"]).agg(
@@ -366,6 +384,7 @@ def analyse(region: str, market: pd.DataFrame | None = None) -> dict:
             "surplus_mw": month_hour_grid(block, "surplus_mw"),
             "residual_mw": month_hour_grid(block, "residual_mw"),
             "renewable_share": share_grid(block),
+            "surplus_share": surplus_share_grid(block),
             "price_aud_mwh": month_hour_grid(block, "rrp_aud_mwh", "median"),
         },
         "by_month": monthly,

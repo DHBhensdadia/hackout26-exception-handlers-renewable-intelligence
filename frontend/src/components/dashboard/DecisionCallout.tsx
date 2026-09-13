@@ -35,9 +35,13 @@ export function DecisionCallout({ forecast, derived }: { forecast: ForecastRespo
         }
       : null,
     {
-      tone: reliability.tone,
-      label: "Equipment risk",
-      body: `${reliability.band} · ≈${reliability.expectedLossMwh} MWh generation at risk`,
+      // Not "equipment risk" - there is no model behind that. The quietest window is a
+      // real, observable read: when taking the plant offline costs the least generation.
+      tone: "ok" as const,
+      label: "Maintenance window",
+      body: reliability.maintenanceWindow
+        ? `${reliability.maintenanceWindow.start} · ${reliability.windowLossMwh} MWh forgone`
+        : "no quiet window inside the horizon",
     },
     {
       tone: "ok" as const,

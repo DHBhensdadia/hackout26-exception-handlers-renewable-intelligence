@@ -185,10 +185,25 @@ describe("seasonal grid", () => {
 });
 
 describe("reliabilityModel", () => {
-  it("returns a bounded risk score and drivers", () => {
+  it("reports observable operating conditions, not a risk score", () => {
     const r = reliabilityModel(makeForecast(24), site);
-    expect(r.risk).toBeGreaterThanOrEqual(0.05);
-    expect(r.risk).toBeLessThanOrEqual(0.6);
-    expect(r.drivers.length).toBeGreaterThan(0);
+    expect(r.signals.length).toBeGreaterThan(0);
+    expect(r.signals.every((s) => s.value.length > 0)).toBe(true);
+    expect(r.maintenanceWindow).not.toBeNull();
+    expect(r.windowLossMwh).toBeGreaterThanOrEqual(0);
+  });
+
+  it("does not expose a fabricated risk index", () => {
+    // The previous version seeded a "risk" from hash01(site_id), so the same site always
+    // scored the same because the score was a property of its name. If either field comes
+    // back, something has reintroduced a number with no model behind it.
+    const r = reliabilityModel(makeForecast(24), site) as unknown as Record<string, unknown>;
+    expect(r.risk).toBeUndefined();
+    expect(r.band).toBeUndefined();
+  });
+
+  it("states why no risk score is shown", () => {
+    const r = reliabilityModel(makeForecast(24), site);
+    expect(r.unavailable).toContain("no model");
   });
 });

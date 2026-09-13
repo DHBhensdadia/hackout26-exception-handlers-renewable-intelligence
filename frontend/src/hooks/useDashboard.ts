@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { demandForRegion, forecast, isAbortError, listRegions, listSites } from "@/api/client";
+import {
+  demandForRegion,
+  forecast,
+  isAbortError,
+  listRegions,
+  listSites,
+  seasonalForRegion,
+} from "@/api/client";
 import { config } from "@/config";
 import type { ForecastResponse, RegionRecord, SiteRecord } from "@/types";
 import { toJson, toRequest, type DashboardForm } from "@/lib/dashboardForm";
@@ -167,11 +174,35 @@ export function useDashboard() {
   const demandError = demandCurrent?.error ?? regionError;
   const demandLoading = !!region && !demandCurrent;
 
-  /** Seasonal is a client-side computation over the regional climatology. */
-  const seasonal = useMemo<SeasonalResult | null>(
-    () => (region ? summarizeSeasonal(seasonalCells(region)) : null),
-    [region]
-  );
+  // Seasonal comes from the backend, which mines it from three years of measured history -
+  // metered demand and the fleet's actual output, with no model in front of it. The
+  // client-side climatology stays as the fallback so the console still works offline.
+  //
+  // Result and the region it belongs to are stored together: keeping them apart would force
+  // a synchronous clear inside the effect on every region change, which cascades renders.
+  const [seasonalState, setSeasonalState] = useState<{
+    key: string;
+    data: SeasonalResult | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!region) return;
+    const key = region.region_id;
+    const ctrl = new AbortController();
+    let live = true;
+    seasonalForRegion(region, ctrl.signal)
+      .then((resp) => live && setSeasonalState({ key, data: summarizeSeasonal(resp) }))
+      .catch((e: unknown) => {
+        if (!live || isAbortError(e)) return;
+        setSeasonalState({ key, data: summarizeSeasonal(seasonalCells(region)) });
+      });
+    return () => {
+      live = false;
+      ctrl.abort();
+    };
+  }, [region]);
+
+  const seasonal = seasonalState?.key === region?.region_id ? seasonalState.data : null;
 
   // First run once the registry arrives, so the console is never blank.
   useEffect(() => {

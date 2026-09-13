@@ -148,10 +148,12 @@ export function ConsoleSummary() {
             Shortage {hhmm(pts[shortage.start].valid_time_utc)}–{hhmm(pts[shortage.end].valid_time_utc)} · hold backup
           </span>
         )}
-        <span className={`chip chip--${reli.tone}`}>
-          <i />
-          <b>{reli.band}</b> risk · ≈{reli.expectedLossMwh} MWh at risk
-        </span>
+        {reli.maintenanceWindow && (
+          <span className="chip chip--ok">
+            <i />
+            Quietest <b>{reli.maintenanceWindow.start}</b> · {reli.windowLossMwh} MWh forgone
+          </span>
+        )}
       </div>
     </div>
   );
