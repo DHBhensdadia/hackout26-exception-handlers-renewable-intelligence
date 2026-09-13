@@ -6,3 +6,5 @@ dist-ssr
 .env
 *.log
 *.tsbuildinfo
+# Vite dependency pre-bundle cache - generated, machine-specific, never source.
+.vite
