@@ -211,3 +211,64 @@ describe("regional balance from the backend", () => {
     expect(regions.some((r) => r.balance_available)).toBe(true);
   }, TIMEOUT);
 });
+
+describe("the dashboard's own client against the real backend", () => {
+  it("gets demand from the API, not the local fallback", async () => {
+    if (!reachable) return;
+    const { demandForRegion, listRegions } = await import("@/api/client");
+    const regions = await listRegions();
+    expect(regions.length).toBeGreaterThan(0);
+
+    const sa1 = regions.find((r) => r.region_id === "SA1");
+    expect(sa1, "SA1 missing from /regions").toBeTruthy();
+    expect(sa1!.name).toBe("South Australia");
+    expect(sa1!.nmae_pct).toBeGreaterThan(0);
+    expect(sa1!.balance_available).toBe(true);
+
+    const demand = await demandForRegion(sa1!, 72);
+    // "modelled" would mean the real call 404'd and the deterministic fallback answered.
+    expect(demand.source).toBe("api");
+    expect(demand.points).toHaveLength(72);
+    for (const p of demand.points) {
+      expect(p.p10_mw).toBeLessThanOrEqual(p.p50_mw);
+      expect(p.p50_mw).toBeLessThanOrEqual(p.p90_mw);
+    }
+  }, TIMEOUT);
+
+  it("surfaces a caveat where the demand model is weak", async () => {
+    if (!reachable) return;
+    const { listRegions } = await import("@/api/client");
+    const vic = (await listRegions()).find((r) => r.region_id === "VIC1");
+    // VIC1 covers 66.9% against a nominal 80%. The API says so rather than presenting
+    // every region at parity, and a panel can show it.
+    expect(vic?.caveat).toBeTruthy();
+    expect(vic!.coverage_pct).toBeLessThan(72);
+  }, TIMEOUT);
+
+  it("serves seasonal patterns as measured history", async () => {
+    if (!reachable) return;
+    const res = await fetch(`${BASE}/seasonal/SA1`);
+    expect(res.ok).toBe(true);
+    const d = (await res.json()) as {
+      data_mode: string;
+      grids: Record<string, (number | null)[][]>;
+      storage: { total_surplus_mwh_per_year: number };
+    };
+    expect(d.data_mode).toBe("measured");
+    expect(d.grids.surplus_mw).toHaveLength(12);
+    expect(d.grids.surplus_mw[0]).toHaveLength(24);
+    expect(d.storage.total_surplus_mwh_per_year).toBeGreaterThan(0);
+  }, TIMEOUT);
+
+  it("serves the value of the stochastic solution", async () => {
+    if (!reachable) return;
+    const vss = (await (await fetch(`${BASE}/vss`)).json()) as {
+      region: string;
+      vss_aud_per_year: number;
+    }[];
+    expect(vss.length).toBeGreaterThan(0);
+    expect(vss.some((v) => v.vss_aud_per_year > 0)).toBe(true);
+    // Regions where it is zero are returned rather than filtered.
+    expect(vss.every((v) => v.vss_aud_per_year >= 0)).toBe(true);
+  }, TIMEOUT);
+});

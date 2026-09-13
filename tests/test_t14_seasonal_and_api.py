@@ -196,3 +196,63 @@ def test_dispatch_rejects_impossible_batteries(client):
     for body in ({"region": "SA1", "energy_mwh": 0}, {"region": "SA1", "efficiency": 2.0}):
         assert client.post("/storage/dispatch", json=body).status_code == 422
     assert client.post("/storage/dispatch", json={"region": "NOWHERE"}).status_code == 404
+
+
+# ------------------------------------------------- shapes the dashboard consumes
+
+
+def test_regions_carry_per_region_model_accuracy(client):
+    """A panel showing a regional forecast should be able to say how good it is there."""
+    body = client.get("/regions").json()
+    assert body, "no regions"
+    for entry in body:
+        # Both spellings are served: region_id is what the dashboard types expect, region is
+        # what every other endpoint uses as its key.
+        assert entry["region_id"] == entry["region"]
+        assert entry["name"] and entry["name"] != entry["region_id"], "no display name"
+        assert isinstance(entry["balance_available"], bool)
+
+    by_id = {e["region_id"]: e for e in body}
+    assert by_id["SA1"]["name"] == "South Australia"
+    assert by_id["SA1"]["nmae_pct"] > 0
+    assert by_id["SA1"]["headroom_mw"] > 0
+
+
+def test_a_weak_region_ships_a_caveat(client):
+    """VIC1 covers 66.9% against a nominal 80%. The API says so rather than presenting
+    every region at parity and leaving a reader to assume they are equivalent."""
+    by_id = {e["region_id"]: e for e in client.get("/regions").json()}
+    vic = by_id.get("VIC1")
+    if vic is None or vic["coverage_pct"] is None:
+        pytest.skip("no VIC1 demand metadata")
+    assert vic["coverage_pct"] < 72
+    assert vic.get("caveat"), "an off-target region must carry a caveat"
+    # And a region that is on target must not.
+    assert not by_id["SA1"].get("caveat")
+
+
+def test_demand_post_matches_the_dashboard_contract(client):
+    if not (get_settings().data_canonical / "balance_SA1.json").exists():
+        pytest.skip("no balance window")
+    body = client.post("/demand", json={"region_id": "SA1", "horizon_h": 72}).json()
+
+    assert body["source"] == "api"
+    assert body["data_mode"] in {"replay", "live"}
+    assert len(body["points"]) == 72
+    assert [p["horizon_h"] for p in body["points"]] == list(range(1, 73))
+    for p in body["points"]:
+        assert p["p10_mw"] <= p["p50_mw"] <= p["p90_mw"]
+
+
+def test_demand_post_and_get_agree(client):
+    """Two shapes of one answer; they must not drift apart."""
+    if not (get_settings().data_canonical / "balance_SA1.json").exists():
+        pytest.skip("no balance window")
+    post = client.post("/demand", json={"region_id": "SA1"}).json()
+    get = client.get("/demand/SA1").json()
+    assert [p["p50_mw"] for p in post["points"]] == get["p50_mw"]
+
+
+def test_demand_post_rejects_bad_input(client):
+    assert client.post("/demand", json={"region_id": "SA1", "horizon_h": 999}).status_code == 422
+    assert client.post("/demand", json={"region_id": "NOWHERE"}).status_code == 404

@@ -175,11 +175,40 @@ def sites() -> list[dict[str, Any]]:
 
 @app.get("/regions")
 def regions() -> list[dict[str, Any]]:
-    """Market regions with installed capacity, for a region selector."""
+    """Market regions, with the demand model's measured accuracy for each.
+
+    Carries per-region `nmae_pct` and `coverage_pct` rather than only capacity, because a
+    dashboard that shows a regional forecast should be able to say how good it is there -
+    and it is not uniformly good. VIC1 covers 66.9% against a nominal 80%, so it ships a
+    `caveat` the UI can surface instead of presenting every region at parity.
+    """
     available = {p.stem.removeprefix("balance_") for p in _balance_files()}
+    demand_meta = _demand_metadata()
+    by_region = demand_meta.get("test", {}).get("by_region", {})
+
     out = []
     for code in registry().regions():
-        entry: dict[str, Any] = {"region": code, "technologies": {}, "balance_available": code in available}
+        stats = by_region.get(code, {})
+        coverage = stats.get("coverage_calibrated")
+        entry: dict[str, Any] = {
+            # Both spellings. `region_id` is what the dashboard types expect; `region` is
+            # what every other endpoint in this API uses as the path and body key, and
+            # dropping either would break one of them.
+            "region_id": code,
+            "region": code,
+            "name": _REGION_NAMES.get(code, code),
+            "nmae_pct": stats.get("model_nmae_pct"),
+            "coverage_pct": None if coverage is None else round(100 * coverage, 1),
+            "headroom_mw": _headroom(code),
+            "balance_available": code in available,
+            "technologies": {},
+        }
+        if coverage is not None and not 0.72 <= coverage <= 0.90:
+            entry["caveat"] = (
+                f"Demand interval covers {100 * coverage:.0f}% against a nominal 80% here - "
+                "seasonal bias no single correction reaches."
+            )
+
         total = 0.0
         for tech in Tech:
             group = registry().by_region(code, tech)
@@ -191,6 +220,31 @@ def regions() -> list[dict[str, Any]]:
         entry["total_capacity_mw"] = round(total, 1)
         out.append(entry)
     return out
+
+
+# Display names. The NEM codes are opaque outside Australia, and a region picker showing
+# "SA1" tells a reader less than "South Australia".
+_REGION_NAMES: dict[str, str] = {
+    "NSW1": "New South Wales",
+    "QLD1": "Queensland",
+    "SA1": "South Australia",
+    "TAS1": "Tasmania",
+    "VIC1": "Victoria",
+}
+
+
+@lru_cache(maxsize=1)
+def _demand_metadata() -> dict:
+    path = get_settings().artifacts_dir / "demand_metadata.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def _headroom(region: str) -> float | None:
+    """Measured dispatchable headroom, from the precomputed balance window."""
+    try:
+        return _load_balance(region).get("dispatchable_headroom_mw")
+    except FileNotFoundError:
+        return None
 
 
 def _balance_files() -> list[Path]:
@@ -288,6 +342,54 @@ def demand(region: str) -> dict[str, Any]:
         "data_mode": payload["data_mode"],
         **payload["demand"],
         "actual_mw": [a["demand_mw"] for a in payload.get("actual", [])],
+    }
+
+
+class DemandRequest(BaseModel):
+    """POST /demand body, in the shape the dashboard types expect."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    region_id: str
+    horizon_h: int = Field(default=MAX_HORIZON_H, ge=MIN_HORIZON_H, le=MAX_HORIZON_H)
+
+
+@app.post("/demand")
+def demand_band(request: DemandRequest) -> dict[str, Any]:
+    """Regional demand band as a list of points, with the model's measured accuracy.
+
+    Same numbers as `GET /demand/{region}`, shaped as `points[]` rather than parallel
+    arrays because that is what the dashboard consumes. `nmae_pct` and `coverage_pct` ride
+    along so a panel can state how good the model is in that specific region without a
+    second request.
+    """
+    code = request.region_id.strip().upper()
+    payload = _balance_payload(code)
+    band = payload["demand"]
+    stats = _demand_metadata().get("test", {}).get("by_region", {}).get(code, {})
+    coverage = stats.get("coverage_calibrated")
+
+    points = [
+        {
+            "valid_time_utc": t,
+            "horizon_h": i + 1,
+            "p10_mw": lo,
+            "p50_mw": mid,
+            "p90_mw": hi,
+        }
+        for i, (t, lo, mid, hi) in enumerate(
+            zip(band["valid_time_utc"], band["p10_mw"], band["p50_mw"], band["p90_mw"], strict=True)
+        )
+    ][: request.horizon_h]
+
+    return {
+        "region_id": code,
+        "data_mode": payload["data_mode"],
+        "model_version": payload["model_version"],
+        "nmae_pct": stats.get("model_nmae_pct"),
+        "coverage_pct": None if coverage is None else round(100 * coverage, 1),
+        "points": points,
+        "source": "api",
     }
 
 
