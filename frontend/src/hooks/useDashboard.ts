@@ -202,7 +202,12 @@ export function useDashboard() {
     };
   }, [region]);
 
-  const seasonal = seasonalState?.key === region?.region_id ? seasonalState.data : null;
+  // `seasonalState && region &&` is load-bearing, not defensive noise. Optional chaining on
+  // both sides made `undefined === undefined` true on the very first render - before either
+  // had loaded - and the branch then dereferenced a null `seasonalState`. It compiled, and
+  // it blanked the dashboard.
+  const seasonal =
+    seasonalState && region && seasonalState.key === region.region_id ? seasonalState.data : null;
 
   // First run once the registry arrives, so the console is never blank.
   useEffect(() => {
