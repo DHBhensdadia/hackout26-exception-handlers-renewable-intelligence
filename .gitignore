@@ -51,6 +51,8 @@ data/*
 !data/canonical/
 data/canonical/*
 !data/canonical/balance_*.json
+!data/canonical/seasonal_*.json
+!data/canonical/ensemble_*.npz
 !data/.gitkeep
 
 # Third-party datasets dropped in by hand. Licensing varies by source and none of

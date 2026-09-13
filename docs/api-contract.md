@@ -45,9 +45,11 @@ bound would procure for a shortfall the fleet does not have.
 | `GET /health` | **Live** | Being extended, additively |
 | `GET /regions` | **Live** | Includes `balance_available` per region |
 | `POST /balance` | **Live** | Serves a precomputed replay window; see `data_mode` |
-| `POST /storage/dispatch` | **Planned** | Shape below is provisional |
+| `POST /storage/dispatch` | **Live** | Solved per request; battery size is interactive |
+| `GET /demand/{region}` | **Live** | From the balance ensemble, so the two agree |
+| `GET /seasonal/{region}` | **Live** | Measured history, not a forecast |
+| `GET /vss` | **Live** | What the uncertainty modelling is worth, in AUD/yr |
 | `GET /alerts` | **Planned** | May be cut; `/balance` carries the same information |
-| `GET /seasonal/{region}` | **Cut from Phase 2** | Do not design screens around it |
 
 "Ready" means the computation and the payload are finished and verified; wiring the HTTP
 route is mechanical. Build against those now.
@@ -331,9 +333,66 @@ before rendering a region selector.
 
 ---
 
-## `POST /storage/dispatch` — planned, provisional
+## `GET /seasonal/{region}` — live
 
-**Shape not yet frozen. Do not build final screens against it.**
+Recurring patterns mined from three years of measured history. **`data_mode` is
+`"measured"`, not `"replay"`** — no model output is involved at all. A recurring pattern is a
+property of the record, and a forecast in front of it would only add error.
+
+```json
+{
+  "region": "SA1",
+  "timezone": "Australia/Adelaide",
+  "years_of_history": 3.0,
+  "data_mode": "measured",
+  "grids": { "surplus_mw": [[...24 hours...], ...12 months...], "renewable_share": [...], "price_aud_mwh": [...] },
+  "by_month": [{ "month": 10, "surplus_mwh_per_year": 227391, "negative_price_hours_per_year": 302, "renewable_share": 0.93 }],
+  "peak_surplus_month": 10,
+  "droughts": { "per_year": 3.3, "days_per_year": 8.0, "duration_quantiles": {"p50": 2.0, "max": 3}, "longest": {...} },
+  "storage": { "total_surplus_mwh_per_year": 1656102, "curve": [...], "targets": {"50pct": {...}, "80pct": {...}} }
+}
+```
+
+**`grids` are 12 × 24** — months down, local hours across. This is the shape a duck curve is
+actually visible in: a horizontal band is a diurnal pattern, a vertical one is seasonal.
+Render as a heat grid. Cells may be `null`.
+
+**Hours are local to the region**, not UTC, because the evening peak is at dinner time and
+the solar trough is at local noon.
+
+**`renewable_share` can exceed 1.0** and legitimately reaches 3.5 at SA1 midday in spring —
+renewables producing three and a half times operational demand. It is an energy ratio
+(summed renewable over summed demand), never a mean of hourly ratios: SA1 demand goes
+negative 257 hours a year, and averaging ratios across a near-zero denominator produced a
+"mean share" of 1590% before this was fixed.
+
+**`droughts` are counted in days, not hours.** Scored hourly, a solar region is in drought
+every night by definition. `storage.curve` is a sizing curve — absorbing half the surplus is
+cheap, the last few percent costs several times more, and `targets` is where the knee is read
+off.
+
+---
+
+## `GET /demand/{region}` — live
+
+Regional demand p10/p50/p90 over the same window as `/balance`, taken from the same
+ensemble so the two cannot disagree. Carries `actual_mw` for the replay window.
+
+---
+
+## `GET /vss` — live
+
+An array, one entry per region. The headline: `vss_aud_per_year` is what planning against
+the scenario ensemble is worth against planning on the median forecast.
+
+Regions where it is **zero are returned, not filtered**. NSW1 is zero correctly — 10 GW of
+dispatchable headroom against 1.7 GW of import capacity means nothing is ever scarce.
+Showing that beside SA1's 170,422 AUD/yr is more convincing than showing only the win.
+`windows_with_positive_vss` says how rare it is: 1 of 12 for SA1.
+
+---
+
+## `POST /storage/dispatch` — live
 
 ```json
 {
@@ -348,10 +407,21 @@ before rendering a region selector.
 }
 ```
 
-Expected response: an hourly schedule (`charge_mw`, `discharge_mw`, `soc_mwh`), the
-committed action for hour 1, and an expected cost in AUD. The first hour is a firm
-commitment; later hours are indicative and will be re-optimised as forecasts update — the
-UI should make that distinction visible.
+Solved per request — the LP stays linear, so battery size and power are genuinely
+interactive rather than fixed at precompute time.
+
+Returns `schedule[]` (`charge`, `discharge`, `dispatchable`, `grid_import`, `grid_export`,
+`curtail`, `unserved`, `energy`, `soc_fraction`, `net_battery_mw`), `committed`, and
+`expected_cost_aud`.
+
+**`committed` is hour 1 and is different in kind from the rest.** It is a firm decision taken
+before anyone knows which future arrives, identical across every scenario. Hours 2 onward are
+recourse and will be re-optimised as forecasts update. Make that visible — render hour 1
+solid and the remainder hatched or reduced in opacity, and the two-stage nature of the
+optimisation explains itself.
+
+Guaranteed: no hour both charges and discharges, state of charge stays within bounds and
+ends at the terminal level, and a larger battery never costs more.
 
 ---
 

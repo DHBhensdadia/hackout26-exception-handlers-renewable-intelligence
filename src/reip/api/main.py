@@ -219,6 +219,19 @@ class BalanceRequest(BaseModel):
     horizon_h: int = Field(default=MAX_HORIZON_H, ge=MIN_HORIZON_H, le=MAX_HORIZON_H)
 
 
+def _balance_payload(region: str) -> dict:
+    """Load a precomputed balance window, or 404 with what is available."""
+    code = region.strip().upper()
+    try:
+        return dict(_load_balance(code))
+    except FileNotFoundError:
+        known = sorted(p.stem.removeprefix("balance_") for p in _balance_files())
+        raise HTTPException(
+            status_code=404,
+            detail=f"no balance window for region {code!r}; available: {known or 'none'}",
+        ) from None
+
+
 @app.post("/balance")
 def regional_balance(request: BalanceRequest) -> dict[str, Any]:
     """Regional generation against regional demand, as calibrated probabilities.
@@ -231,18 +244,7 @@ def regional_balance(request: BalanceRequest) -> dict[str, Any]:
     The demand model needs load at the issue time, and the market corpus ends before today,
     so there is no honest way to serve tonight until that ingest runs to the present.
     """
-    region = request.region.strip().upper()
-    try:
-        payload = dict(_load_balance(region))
-    except FileNotFoundError:
-        known = sorted(p.stem.removeprefix("balance_") for p in _balance_files())
-        raise HTTPException(
-            status_code=404,
-            detail=(
-                f"no balance window for region {region!r}; available: {known or 'none - run '
-                'python -m reip.balance.precompute'}"
-            ),
-        ) from None
+    payload = _balance_payload(request.region)
 
     # Trim to the requested horizon rather than ignoring it: the dashboard's horizon control
     # should do something, and the points are already ordered by lead time.
@@ -250,6 +252,150 @@ def regional_balance(request: BalanceRequest) -> dict[str, Any]:
     payload["actual"] = payload.get("actual", [])[: request.horizon_h]
     payload["horizon_h"] = request.horizon_h
     return payload
+
+
+@app.get("/seasonal/{region}")
+def seasonal(region: str) -> dict[str, Any]:
+    """Recurring patterns mined from three years of measured history.
+
+    Not a forecast and not derived from one. A recurring pattern is a property of the record,
+    so this is metered demand, the intermittent fleet's available output, spot price and
+    actual curtailment - which is why `data_mode` is `measured` rather than `replay`.
+    """
+    from reip.seasonal.patterns import artifact_path as seasonal_path
+
+    path = seasonal_path(region.strip().upper())
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"no seasonal analysis for {region!r}; run `python -m reip.seasonal.patterns`",
+        )
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.get("/demand/{region}")
+def demand(region: str) -> dict[str, Any]:
+    """Regional demand forecast, p10/p50/p90, over the same window as `/balance`.
+
+    Taken from the balance ensemble rather than re-predicted, so the two cannot disagree
+    about what demand was expected to do.
+    """
+    payload = _balance_payload(region)
+    return {
+        "region": payload["region"],
+        "issue_time_utc": payload["issue_time_utc"],
+        "model_version": payload["model_version"],
+        "data_mode": payload["data_mode"],
+        **payload["demand"],
+        "actual_mw": [a["demand_mw"] for a in payload.get("actual", [])],
+    }
+
+
+@app.get("/vss")
+def value_of_stochastic_solution() -> list[dict[str, Any]]:
+    """What planning against the scenario ensemble is worth, against planning on the median.
+
+    The number the whole uncertainty chain exists to justify. Regions where it is zero are
+    returned rather than filtered: a metric honest about where it does not apply is worth
+    more than one that only reports its wins.
+    """
+    path = get_settings().reports_dir / "vss.json"
+    if not path.exists():
+        raise HTTPException(status_code=503, detail="no VSS report; run `python -m reip.eval.vss`")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+class StorageRequest(BaseModel):
+    """POST /storage/dispatch body. Battery parameters are the caller's to choose."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    region: str
+    energy_mwh: float = Field(default=200.0, gt=0, le=100_000)
+    power_mw: float = Field(default=100.0, gt=0, le=50_000)
+    efficiency: float = Field(default=0.88, gt=0, le=1)
+    initial_soc: float = Field(default=0.5, ge=0, le=1)
+
+
+@app.post("/storage/dispatch")
+def storage_dispatch(request: StorageRequest) -> dict[str, Any]:
+    """Optimal battery schedule against the region's scenario ensemble.
+
+    Solved live - the LP takes well under a second because dropping the redundant
+    charge/discharge binary keeps it linear - so battery size and power are genuinely
+    interactive rather than fixed at precompute time.
+
+    Hour 1 is a firm commitment, identical across every scenario; later hours are recourse
+    and will be re-optimised as forecasts update. The response separates the two.
+    """
+    import numpy as np
+
+    from reip.balance.precompute import ensemble_path
+    from reip.storage.asset import GridLimits, StorageAsset, grid_limits_from_market
+    from reip.storage.dispatch import solve
+
+    code = request.region.strip().upper()
+    path = ensemble_path(code)
+    if not path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"no scenario ensemble for {code!r}; run `python -m reip.balance.precompute`",
+        )
+
+    with np.load(path) as bundle:
+        renewable = bundle["renewable_mw"]
+        demand_mw = bundle["demand_mw"]
+        price = bundle["price_aud_mwh"]
+        headroom = float(bundle["headroom_mw"][0])
+
+    try:
+        asset = StorageAsset(
+            energy_mwh=request.energy_mwh,
+            power_mw=request.power_mw,
+            efficiency=request.efficiency,
+            initial_soc=max(0.05, min(request.initial_soc, 0.95)),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    grid: GridLimits = grid_limits_from_market(code)
+    # Fewer scenarios than the balance uses: the LP is linear in scenario count and solved
+    # inside a request, and 50 keeps the tails wide enough to matter while staying instant.
+    keep = min(50, renewable.shape[0])
+    result = solve(
+        renewable_mw=renewable[:keep],
+        demand_mw=demand_mw[:keep],
+        price_aud_mwh=price,
+        asset=asset,
+        grid=grid,
+        dispatchable_mw=headroom,
+    )
+
+    schedule = result.schedule.round(2)
+    return {
+        "region": code,
+        "n_scenarios": result.n_scenarios,
+        "data_mode": "replay",
+        "asset": {
+            "energy_mwh": asset.energy_mwh,
+            "power_mw": asset.power_mw,
+            "duration_h": round(asset.duration_h, 2),
+            "efficiency": asset.efficiency,
+        },
+        "grid": {
+            "import_limit_mw": round(grid.import_limit_mw, 1),
+            "export_limit_mw": round(grid.export_limit_mw, 1),
+        },
+        "dispatchable_headroom_mw": round(headroom, 1),
+        "expected_cost_aud": round(result.expected_cost_aud, 2),
+        # Hour 1 is the decision actually being committed to; everything after it is a plan.
+        "committed": {
+            "action": result.committed_action,
+            "charge_mw": round(result.committed_charge_mw, 2),
+            "discharge_mw": round(result.committed_discharge_mw, 2),
+        },
+        "schedule": schedule.to_dict("records"),
+    }
 
 
 @app.post("/forecast", response_model=SiteForecast)

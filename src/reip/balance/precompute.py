@@ -47,6 +47,17 @@ def artifact_path(region: str, directory: Path | None = None) -> Path:
     return directory / f"balance_{region}.json"
 
 
+def ensemble_path(region: str, directory: Path | None = None) -> Path:
+    """Where the raw scenario ensembles are kept, for the dispatch optimiser.
+
+    Saved separately and compressed rather than inlined in the JSON: 200 scenarios x 72
+    hours x two series is a quarter of a megabyte of numbers nobody reading the balance
+    payload wants, and the optimiser wants them as arrays rather than as parsed text.
+    """
+    directory = directory or get_settings().data_canonical
+    return directory / f"ensemble_{region}.npz"
+
+
 def build(region: str, *, n_scenarios: int = N_SCENARIOS, seed: int = 3) -> dict:
     """Compute one balance window for a region and return the API payload."""
     from reip.eval.balance import prepare_region
@@ -115,6 +126,44 @@ def build(region: str, *, n_scenarios: int = N_SCENARIOS, seed: int = 3) -> dict
 
     actual = _actual_series(prepared, window)
 
+    # Keep the raw ensembles and the price series. The dispatch optimiser needs the joint
+    # trajectories, not the marginal quantiles the payload carries - a battery is dispatched
+    # against a path, and a per-hour quantile is not one.
+    renewable_ensemble = np.sum([s.regional_total() for s in generation.values()], axis=0)
+    demand_ensemble = balance.demand_scenarios(
+        region,
+        prepared["demand_frame"].loc[window, "p50_mw"].to_numpy(dtype="float64"),
+        window,
+        n_scenarios=n_scenarios,
+        block_starts=block_starts,
+        peak_mw=prepared["peak"],
+        store=prepared["demand_store"],
+    )
+    market = pd.read_parquet(get_settings().data_canonical / "aemo_market.parquet")
+    prices = (
+        market[market["region"] == region]
+        .drop_duplicates("valid_time_utc")
+        .set_index("valid_time_utc")["rrp_aud_mwh"]
+        .reindex(window)
+        .ffill()
+        .bfill()
+        .to_numpy(dtype="float64")
+    )
+    np.savez_compressed(
+        ensemble_path(region),
+        renewable_mw=renewable_ensemble,
+        demand_mw=demand_ensemble,
+        price_aud_mwh=prices,
+        headroom_mw=np.array([prepared["headroom"]]),
+    )
+
+    # Demand quantiles recovered from the ensemble, so the demand endpoint and the balance
+    # describe the same draws rather than two independent ones.
+    demand_quantiles = {
+        f"p{int(q * 100):02d}_mw": np.quantile(demand_ensemble, q, axis=0).round(2).tolist()
+        for q in (0.10, 0.50, 0.90)
+    }
+
     payload = {
         "region": region,
         "issue_time_utc": pd.Timestamp(window[0]).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -130,6 +179,11 @@ def build(region: str, *, n_scenarios: int = N_SCENARIOS, seed: int = 3) -> dict
             "stood at the issue time, against real metered demand. Live operation needs the "
             "AEMO market ingest run to the present."
         ),
+        "demand": {
+            "valid_time_utc": frame["valid_time_utc"].tolist(),
+            **demand_quantiles,
+            "peak_mw": round(float(prepared["peak"]), 1),
+        },
         "points": frame.to_dict("records"),
         "events": (
             balance.event_runs(result.frame, "p_surplus")
