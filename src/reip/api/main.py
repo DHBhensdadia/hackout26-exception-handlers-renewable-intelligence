@@ -9,12 +9,15 @@ and site geometry rather than memorising individual plants.
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import UTC, datetime
+from functools import lru_cache
 from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from reip.config import MODEL_VERSION, get_settings
@@ -29,6 +32,19 @@ app = FastAPI(
     title="Renewable Energy Intelligence Platform - Forecasting API",
     version=MODEL_VERSION,
     description="24-72 hour solar and wind power forecasts with p10/p50/p90 uncertainty bands.",
+)
+
+# The dashboard is served from its own origin - Vite on 5173 in development - so every call
+# it makes to this API is cross-origin and the browser sends a preflight first. Without this
+# middleware that preflight is answered with 405 and no allow-origin header, and the browser
+# blocks every request before it reaches a route. Nothing shows up in the API log, which
+# makes it look like a frontend bug when it is entirely a server one.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["content-type"],
 )
 
 _registry: SiteRegistry | None = None
@@ -102,25 +118,51 @@ def health() -> HealthResponse:
     )
 
 
+@lru_cache(maxsize=1)
+def _trained_site_ids() -> frozenset[str]:
+    """Sites that actually appear in a trained model's corpus.
+
+    Read from the artifacts rather than inferred from the id. The previous version tested
+    `site_id.startswith("GEFCOM-")`, which was true when GEFCom2014 was the training set and
+    became false the moment the corpus moved to AEMO - after which all 151 trained plants
+    reported themselves as never-seen. The flag is what the UI uses to mark a forecast as a
+    genuine cold start, so getting it backwards undersells the one claim the platform most
+    wants to make.
+    """
+    from reip.config import get_settings
+
+    ids: set[str] = set()
+    for tech in Tech:
+        path = get_settings().artifacts_dir / f"{tech.value}_metadata.json"
+        if path.exists():
+            ids.update(json.loads(path.read_text(encoding="utf-8")).get("sites", []))
+    return frozenset(ids)
+
+
 @app.get("/sites")
-def sites() -> dict[str, Any]:
-    """Registered sites. The GJ-* entries are Gujarat demo sites absent from all training data."""
-    return {
-        "count": len(registry()),
-        "sites": [
-            {
-                "site_id": s.site_id,
-                "name": s.name,
-                "tech": s.tech.value,
-                "capacity_mw": s.capacity_mw,
-                "latitude": s.latitude,
-                "longitude": s.longitude,
-                "in_training_data": s.site_id.startswith("GEFCOM-"),
-                "location_is_estimated": s.location_is_estimated,
-            }
-            for s in registry().all()
-        ],
-    }
+def sites() -> list[dict[str, Any]]:
+    """Every registered site, as a flat list.
+
+    A bare array rather than an envelope: the count is `length`, and wrapping it only forces
+    every consumer to unwrap it.
+    """
+    trained = _trained_site_ids()
+    return [
+        {
+            "site_id": s.site_id,
+            "name": s.name,
+            "tech": s.tech.value,
+            "capacity_mw": s.capacity_mw,
+            "latitude": s.latitude,
+            "longitude": s.longitude,
+            # Empty string, not null: the field is a display label and a UI should not have
+            # to special-case a site that dispatches into no market region.
+            "region": s.market_region or "",
+            "in_training_data": s.site_id in trained,
+            "location_is_estimated": s.location_is_estimated,
+        }
+        for s in registry().all()
+    ]
 
 
 @app.post("/forecast", response_model=SiteForecast)

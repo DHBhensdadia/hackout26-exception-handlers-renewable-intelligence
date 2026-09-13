@@ -37,6 +37,19 @@ class Settings(BaseSettings):
         "https://historical-forecast-api.open-meteo.com/v1/forecast"
     )
     openmeteo_timeout_s: float = 20.0
+
+    # Browser origins allowed to call this API.
+    #
+    # Listed explicitly rather than "*": the dashboard sends no credentials, so a wildcard
+    # would work today, but an allow-list is the setting that stays correct if it ever does.
+    # Both loopback spellings appear because a browser treats them as different origins and
+    # Vite prints whichever the machine resolves.
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    ]
     weather_cache_ttl_s: int = 3600  # one issue hour; keeps us inside the free tier
 
     # --- model -------------------------------------------------------------------
