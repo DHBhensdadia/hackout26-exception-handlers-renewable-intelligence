@@ -40,6 +40,31 @@ modest: mean interval width rises 1.8% (solar) and 9.2% (wind) from the 24 h buc
 Full breakdown: [`reports/benchmark.md`](reports/benchmark.md). Head-to-head against the
 previous single-lead model: [`reports/lead_comparison.json`](reports/lead_comparison.json).
 
+## Running the full prototype
+
+Two processes: the forecasting API, and the dashboard that consumes it.
+
+```bash
+# 1. Backend  (http://localhost:8000)
+uv run uvicorn reip.api.main:app --port 8000
+
+# 2. Frontend (http://localhost:5173)
+cd frontend
+npm install
+cp .env.example .env.local        # VITE_USE_MOCK=false -> use the real API
+npm run dev
+```
+
+Open http://localhost:5173. The dashboard runs against the live model; without
+`.env.local` it falls back to its built-in mock, so the UI still demos with no backend
+running.
+
+Verify the join end to end:
+
+```bash
+cd frontend && npm run test       # includes live-API integration tests, skipped if it is down
+```
+
 ## Quick start
 
 ```bash

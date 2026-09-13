@@ -145,12 +145,48 @@ def test_health(client):
     assert set(body["models_loaded"]) == {"solar", "wind"}
 
 
-def test_sites_endpoint_marks_training_membership(client):
+def test_sites_endpoint_returns_a_flat_list(client):
+    """A bare array, which is what the published contract promises."""
     body = client.get("/sites").json()
-    assert body["count"] > 0
+    assert isinstance(body, list), "/sites must return an array, not an envelope"
+    assert len(body) > 0
+    required = {"site_id", "name", "tech", "capacity_mw", "latitude", "longitude",
+                "region", "in_training_data", "location_is_estimated"}
+    assert required <= set(body[0]), f"missing {required - set(body[0])}"
 
-    by_id = {s["site_id"]: s for s in body["sites"]}
-    assert by_id["GEFCOM-SOLAR-1"]["in_training_data"] is True
+
+def test_sites_endpoint_marks_training_membership(client, artifacts_present):
+    """The flag must reflect the corpus actually trained on, not an id prefix.
+
+    This previously read `site_id.startswith("GEFCOM-")`, and this test asserted that
+    behaviour - so when the corpus moved to AEMO, both the endpoint and the test stayed
+    consistent with each other and wrong about the world. Every one of the 151 trained
+    plants reported itself as never-seen, which understates the cold-start claim rather
+    than overstating it, but is wrong either way.
+
+    Checked against the artifact metadata, which is the only thing that actually knows.
+    """
+    if not artifacts_present:
+        pytest.skip("no trained artifacts")
+
+    import json
+
+    from reip.config import get_settings
+    from reip.schemas import Tech
+
+    trained = set()
+    for tech in Tech:
+        path = get_settings().artifacts_dir / f"{tech.value}_metadata.json"
+        if path.exists():
+            trained.update(json.loads(path.read_text(encoding="utf-8"))["sites"])
+
+    by_id = {s["site_id"]: s for s in client.get("/sites").json()}
+    assert trained, "no trained sites recorded in any artifact"
+    for site_id in list(trained)[:20]:
+        if site_id in by_id:
+            assert by_id[site_id]["in_training_data"] is True, f"{site_id} trained but not flagged"
+
+    # The cold-start demo site must never be marked as seen - it is the whole demonstration.
     assert by_id["GJ-SOLAR-CHARANKA"]["in_training_data"] is False
 
 
