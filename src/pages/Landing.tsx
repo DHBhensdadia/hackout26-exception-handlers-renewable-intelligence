@@ -281,9 +281,26 @@ export default function Landing() {
           <div className="cine__blend" aria-hidden="true" />
 
           <div className="cine__ui">
-            <Link to="/" className="cine__mark">
-              re-forecast
-            </Link>
+            <div className="cine__top">
+              <Link to="/" className="cine__mark">
+                re-forecast
+              </Link>
+            </div>
+
+            <nav className="cine__nav" aria-label="Explore the platform">
+              <Link to="/dashboard/forecast">
+                <span className="n">01</span>
+                <span className="t">Forecast</span>
+              </Link>
+              <a href="#manifesto">
+                <span className="n">02</span>
+                <span className="t">Approach</span>
+              </a>
+              <a href="#modules">
+                <span className="n">03</span>
+                <span className="t">Research</span>
+              </a>
+            </nav>
 
             <div className="cine__foot">
               <p className="cine__note">Renewable energy intelligence</p>

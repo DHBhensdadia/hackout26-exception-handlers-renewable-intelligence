@@ -193,6 +193,16 @@
   filter: blur(calc(var(--hp) * 7px));
   will-change: transform, opacity;
 }
+
+/* soft top scrim so the in-base nav always reads over the bright sky */
+.cine__ui::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: clamp(84px, 15vh, 160px);
+  background: linear-gradient(180deg, rgba(8, 12, 16, 0.55), rgba(8, 12, 16, 0));
+  pointer-events: none;
+}
 .cine__mark {
   font-family: var(--font-nav), system-ui, sans-serif;
   font-weight: 600;
@@ -206,6 +216,81 @@
   padding: 6px 2px;
   border-radius: 8px;
 }
+.cine__top {
+  display: flex;
+  align-items: center;
+}
+
+/* In-base navigation: the site navbar only drops in past the hero, so the
+   three non-dashboard links live here as a vertical rail on the left edge,
+   using the empty middle band between the wordmark and the tagline. */
+.cine__nav {
+  position: absolute;
+  left: clamp(20px, 3.4vw, 46px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: auto;
+}
+.cine__nav a {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6);
+  text-decoration: none;
+  transition: color 0.22s ease;
+}
+.cine__nav a:last-child { border-bottom: 0; }
+.cine__nav a .n {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.42);
+  transition: color 0.22s ease;
+}
+.cine__nav a::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: #ffd88a;
+  transition: width 0.22s ease;
+}
+.cine__nav a:hover,
+.cine__nav a:focus-visible { color: #fff; }
+.cine__nav a:hover .n,
+.cine__nav a:focus-visible .n { color: rgba(255, 255, 255, 0.8); }
+.cine__nav a:hover::before,
+.cine__nav a:focus-visible::before { width: 9px; }
+.cine__nav a:focus-visible {
+  outline: 3px solid #ffd88a;
+  outline-offset: 4px;
+}
+
+/* short viewports: a centred rail would crowd the tagline, so pin it under
+   the wordmark instead */
+@media (max-height: 640px) {
+  .cine__nav {
+    top: calc(clamp(20px, 3.4vw, 46px) + 44px);
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .cine__nav a { padding: 0.68rem 0; letter-spacing: 0.14em; }
+}
+
 .cine__foot {
   display: flex;
   align-items: flex-end;
