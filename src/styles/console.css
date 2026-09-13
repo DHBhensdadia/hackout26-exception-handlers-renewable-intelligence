@@ -1,0 +1,545 @@
+/* =============================================================
+   Console — Vunai "appwin" fidelity.
+   Ported from Refrence/refrence elements/Vunai/public/css/devices.css:
+   .appwin (L798-841), .macbar (L973-1001), .metric (L784-786, L928-930),
+   .chip (L675, L854), .pill (L839-841).
+
+   Everything is scoped under .console-page (native CSS nesting) so the
+   dashboard chrome can never leak into the landing's .appwin hero mock,
+   which shares the same class names via global.css.
+   ============================================================= */
+
+.console-page {
+  min-height: 100vh;
+  padding: clamp(10px, 1.7vw, 26px);
+  background: var(--bg);
+}
+
+.console-page {
+  /* ---------- window frame ---------- */
+  .appwin {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    left: auto;
+    transform: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    min-height: min(900px, calc(100vh - clamp(20px, 3.4vw, 52px)));
+    background: #0f0f12;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 50px 130px -50px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+    --lx-fg: #e9e9ec;
+    --lx-2: #b6b6bd;
+    --lx-mut: #7c7c85;
+    --lx-faint: #62626b;
+    --lx-line: rgba(255, 255, 255, 0.07);
+    --lx-ok: #4cb782;
+    --lx-warn: #e2a33c;
+    --lx-bad: #eb5e57;
+    --lx-blue: #5b7cfa;
+  }
+
+  /* ---------- mac window chrome ---------- */
+  .macbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border-bottom: 1px solid var(--lx-line);
+  }
+  .macbar__lights {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    z-index: 1;
+  }
+  .macbar__lights i { width: 13px; height: 12px; display: block; }
+  .macbar__lights .r { background: #ff5f57; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+  .macbar__lights .y { background: #febc2e; clip-path: polygon(0% 0%, 100% 0%, 50% 100%); }
+  .macbar__lights .g { background: #28c840; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+  .macbar__title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0 90px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--lx-mut);
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .macbar__title b {
+    color: var(--lx-2);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .macbar__fav {
+    width: 13px;
+    height: 13px;
+    flex: none;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: #9aa2f0;
+  }
+  .macbar__tools {
+    margin-left: auto;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+  .macbar__tool {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--lx-line);
+    border-radius: 7px;
+    color: var(--lx-2);
+    cursor: pointer;
+  }
+  .macbar__tool:hover { color: var(--lx-fg); border-color: rgba(255, 255, 255, 0.16); }
+  .macbar__tool:disabled { opacity: 0.55; cursor: default; }
+
+  /* ---------- shell grid ---------- */
+  .appwin__grid {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  /* ---------- sidebar ---------- */
+  .appwin__side {
+    background: #0b0b0d;
+    border-right: 1px solid var(--lx-line);
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .appwin__brand-wrap { position: relative; }
+  .appwin__brand {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    padding: 0.35rem 0.45rem 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--lx-fg);
+    cursor: pointer;
+    text-align: left;
+  }
+  .appwin__brand:hover { background: rgba(255, 255, 255, 0.04); }
+  .appwin__brand .mk {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background: var(--m-gradient);
+    flex: none;
+  }
+  .appwin__brand .cv { color: var(--lx-faint); margin-left: auto; }
+  .appwin__brand .cv--open { transform: rotate(180deg); }
+  .appwin__grp {
+    color: var(--lx-faint);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.85rem 0.5rem 0.3rem;
+  }
+  .appwin__nav { display: grid; gap: 1px; }
+  .appwin__nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.34rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--lx-2);
+    text-decoration: none;
+    transition: background var(--t-fast), color var(--t-fast);
+  }
+  .appwin__nav a .em {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    flex: none;
+  }
+  .appwin__nav a:hover { background: rgba(255, 255, 255, 0.05); color: var(--lx-fg); }
+  .appwin__nav a.on { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  .appwin__nav a .n {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--lx-faint);
+  }
+  .appwin__nav a.on .n { color: var(--lx-mut); }
+  .appwin__region { font-size: 0.68rem; color: var(--lx-faint); text-align: center; }
+
+  /* ported icon rule from the reference */
+  & svg.ic {
+    width: 16px;
+    height: 16px;
+    max-width: none;
+    flex: 0 0 auto;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: middle;
+  }
+  .appwin__nav a .em svg.ic { width: 15px; height: 15px; color: var(--lx-mut); }
+  .appwin__nav a.on .em svg.ic { color: var(--lx-fg); }
+
+  /* site switcher menu */
+  .appwin__menu {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: #15151a;
+    border: 1px solid var(--lx-line);
+    border-radius: 9px;
+    padding: 0.25rem;
+    display: grid;
+    gap: 1px;
+    box-shadow: var(--shadow-lg);
+  }
+  .appwin__menu-cap {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lx-faint);
+    padding: 0.35rem 0.45rem 0.2rem;
+  }
+  .appwin__menu button,
+  .appwin__menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0.45rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    text-align: left;
+    color: var(--lx-2);
+    font-size: 0.78rem;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .appwin__menu button:hover,
+  .appwin__menu a:hover { background: rgba(255, 255, 255, 0.06); color: var(--lx-fg); }
+  .appwin__menu .tid {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .appwin__menu svg { margin-left: auto; color: var(--lx-blue); flex: none; }
+
+  /* sidebar footer — run controls */
+  .appwin__foot {
+    margin-top: auto;
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.9rem 0.1rem 0.1rem;
+    border-top: 1px solid var(--lx-line);
+  }
+  .appwin__status {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.04em;
+    color: var(--lx-mut);
+    overflow: hidden;
+  }
+  .appwin__status span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .appwin__status .dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--lx-faint); }
+  .appwin__status .dot.on { background: var(--lx-ok); }
+  .appwin__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 7px;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  }
+  .appwin__btn--ghost {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--lx-line);
+    color: var(--lx-2);
+  }
+  .appwin__btn--ghost:hover { border-color: rgba(255, 255, 255, 0.16); color: var(--lx-fg); }
+  .appwin__btn--solid {
+    background: var(--lx-fg);
+    border: 1px solid var(--lx-fg);
+    color: #101114;
+    font-weight: 600;
+  }
+  .appwin__btn--solid:hover { background: #fff; }
+  .appwin__btn:disabled { opacity: 0.55; cursor: default; }
+
+  /* ---------- body ---------- */
+  .appwin__body {
+    background: #0f0f12;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .appwin__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--lx-line);
+  }
+  .appwin__bar-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    color: var(--lx-fg);
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .appwin__bar-meta {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--lx-mut);
+    white-space: nowrap;
+  }
+  .appwin__content {
+    display: block;
+    padding: 18px 22px 30px;
+    min-width: 0;
+  }
+
+  /* ---------- live summary ---------- */
+  .csum {
+    display: grid;
+    gap: 16px;
+    padding: 18px 22px 2px;
+  }
+  .csum__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .metric {
+    border: 1px solid var(--lx-line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .metric .mk { color: var(--lx-mut); font-size: 0.76rem; }
+  .metric b {
+    display: block;
+    margin-top: 0.25rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    color: var(--lx-fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .metric .d {
+    display: block;
+    margin-top: 0.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--lx-faint);
+  }
+
+  /* horizon timeline */
+  .hline { padding-top: 6px; }
+  .hline__rail { position: relative; height: 16px; }
+  .hline__rail::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    border-top: 1px dashed rgba(255, 255, 255, 0.22);
+  }
+  .hline__seg {
+    position: absolute;
+    top: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    opacity: 0.85;
+  }
+  .hline__seg--surplus { background: var(--lx-ok); }
+  .hline__seg--shortage { background: var(--lx-warn); }
+  .hline__now {
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    margin-top: -4.5px;
+    border-radius: 50%;
+    background: var(--lx-fg);
+    animation: hline-pulse 2.4s ease-in-out infinite;
+  }
+  .hline__ticks { position: relative; height: 20px; margin-top: 4px; }
+  .hline__tick {
+    position: absolute;
+    transform: translateX(-50%);
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--lx-faint);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .hline__tick::before { content: ""; width: 1px; height: 5px; background: rgba(255, 255, 255, 0.22); }
+  .hline__tick:hover,
+  .hline__tick:focus-visible,
+  .hline__tick.on { color: var(--lx-fg); }
+  .hline__read {
+    min-height: 1.2em;
+    margin-top: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--lx-mut);
+  }
+
+  /* status chips */
+  .csum__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.74rem;
+    line-height: 1;
+    padding: 0.42rem 0.7rem;
+    border: 1px solid var(--lx-line);
+    border-radius: 999px;
+    color: var(--lx-2);
+    background: rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+  }
+  .chip i { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--lx-mut); }
+  .chip b { font-weight: 600; }
+  .chip--ok { color: #a9e3c2; border-color: rgba(76, 183, 130, 0.35); }
+  .chip--ok i { background: var(--lx-ok); }
+  .chip--warn { color: #ecc98a; border-color: rgba(226, 163, 60, 0.35); }
+  .chip--warn i { background: var(--lx-warn); }
+  .chip--bad { color: #f0b0ac; border-color: rgba(235, 94, 87, 0.4); }
+  .chip--bad i { background: var(--lx-bad); }
+
+  /* ---------- console modules adopt the appwin frame language ---------- */
+  .cells {
+    border: 1px solid var(--lx-line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--lx-line);
+  }
+  .cell { background: #0f0f12; }
+  .panel2,
+  .code-card,
+  .ftable__scroll { border-radius: 12px; }
+  .code-card { border-color: var(--lx-line); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1080px) {
+    .macbar__tools { display: flex; }
+    .macbar__title { padding: 0 78px; }
+    .appwin__grid { grid-template-columns: 1fr; }
+    .appwin__side {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: min(280px, 84vw);
+      z-index: 60;
+      transform: translateX(-100%);
+      transition: transform var(--t-base) var(--ease);
+      box-shadow: 0 0 60px -20px rgba(0, 0, 0, 0.9);
+    }
+    .appwin__side.open { transform: translateX(0); }
+    .csum__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 620px) {
+    .appwin { border-radius: 0; border: 0; min-height: 100vh; }
+    .macbar { height: 44px; padding: 0 12px; }
+    .appwin__bar { flex-wrap: wrap; padding: 11px 14px; }
+    .csum { padding: 14px 14px 0; }
+    .csum__metrics { gap: 10px; }
+    .metric { padding: 12px 13px; }
+    .appwin__content { padding: 14px 14px 26px; }
+    .hline__tick:nth-child(even) { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hline__now { animation: none; }
+  }
+}
+
+/* ---------- off-canvas scrim (outside the wrapper: root-level fixed) ---------- */
+.console-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.55);
+  border: 0;
+  padding: 0;
+}
+
+@keyframes hline-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(233, 233, 236, 0.14); }
+  50% { box-shadow: 0 0 0 8px rgba(233, 233, 236, 0.02); }
+}

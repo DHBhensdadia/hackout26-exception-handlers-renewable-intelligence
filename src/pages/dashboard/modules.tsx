@@ -21,16 +21,26 @@ export interface ModuleDef {
   Icon: LucideIcon;
   title: string;
   meta: string;
+  /** Body-bar title; defaults to `title` when absent. */
+  bar?: (ctx: { tech: string; h: number }) => string;
 }
 
 /** Sidebar order == the decision chain. */
 export const MODULES: ModuleDef[] = [
   { to: "/dashboard", label: "Overview", n: "01", Icon: Target, title: "The call", meta: "decision" },
-  { to: "/dashboard/forecast", label: "Forecast", n: "02", Icon: Activity, title: "Forecast", meta: "measured · xgb-q · p10/p50/p90" },
+  {
+    to: "/dashboard/forecast",
+    label: "Forecast",
+    n: "02",
+    Icon: Activity,
+    title: "Forecast",
+    meta: "measured · xgb-q · p10/p50/p90",
+    bar: ({ tech, h }) => `${tech === "wind" ? "Wind" : "Solar"} forecast — next ${h} h`,
+  },
   { to: "/dashboard/balance", label: "Balance", n: "03", Icon: ArrowLeftRight, title: "Balance", meta: "modelled · generation vs demand vs storage" },
   { to: "/dashboard/reliability", label: "Reliability", n: "04", Icon: ShieldCheck, title: "Reliability", meta: "modelled · risk-only" },
-  { to: "/dashboard/seasonal", label: "Seasonal", n: "05", Icon: CalendarRange, title: "Seasonal", meta: "modelled · recurring pattern" },
-  { to: "/dashboard/demand", label: "Demand", n: "06", Icon: Zap, title: "Demand & capacity", meta: "modelled · planning" },
+  { to: "/dashboard/seasonal", label: "Seasonal", n: "05", Icon: CalendarRange, title: "Seasonal", meta: "modelled · month × hour climatology" },
+  { to: "/dashboard/demand", label: "Demand", n: "06", Icon: Zap, title: "Demand & capacity", meta: "modelled · regional demand band" },
   { to: "/dashboard/investment", label: "Investment", n: "07", Icon: CircleDollarSign, title: "Investment", meta: "scenario · not advice" },
 ];
 
