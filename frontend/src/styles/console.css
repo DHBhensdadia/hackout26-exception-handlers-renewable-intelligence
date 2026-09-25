@@ -170,8 +170,6 @@
     background: var(--m-gradient);
     flex: none;
   }
-  .appwin__brand .cv { color: var(--lx-faint); margin-left: auto; }
-  .appwin__brand .cv--open { transform: rotate(180deg); }
   .appwin__grp {
     color: var(--lx-faint);
     font-size: 0.66rem;
@@ -225,56 +223,6 @@
   .appwin__nav a .em svg.ic { width: 15px; height: 15px; color: var(--lx-mut); }
   .appwin__nav a.on .em svg.ic { color: var(--lx-fg); }
 
-  /* site switcher menu */
-  .appwin__menu {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    left: 0;
-    right: 0;
-    z-index: 30;
-    background: #15151a;
-    border: 1px solid var(--lx-line);
-    border-radius: 9px;
-    padding: 0.25rem;
-    display: grid;
-    gap: 1px;
-    box-shadow: var(--shadow-lg);
-  }
-  .appwin__menu-cap {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--lx-faint);
-    padding: 0.35rem 0.45rem 0.2rem;
-  }
-  .appwin__menu button,
-  .appwin__menu a {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.4rem 0.45rem;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    text-align: left;
-    color: var(--lx-2);
-    font-size: 0.78rem;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .appwin__menu button:hover,
-  .appwin__menu a:hover { background: rgba(255, 255, 255, 0.06); color: var(--lx-fg); }
-  .appwin__menu .tid {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .appwin__menu svg { margin-left: auto; color: var(--lx-blue); flex: none; }
-
   /* sidebar footer — run controls */
   .appwin__foot {
     margin-top: auto;
@@ -305,6 +253,7 @@
     border-radius: 7px;
     font-family: var(--font-heading);
     font-size: 0.8rem;
+    text-decoration: none;
     cursor: pointer;
     transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
   }

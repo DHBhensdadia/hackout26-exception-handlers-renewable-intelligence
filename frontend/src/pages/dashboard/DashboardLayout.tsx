@@ -75,7 +75,14 @@ function Shell() {
         </div>
 
         <div className="appwin__grid">
-          <Sidebar open={navOpen} onClose={() => setNavOpen(false)} onOpenSettings={() => setSettingsOpen(true)} />
+          <Sidebar
+            open={navOpen}
+            onClose={() => setNavOpen(false)}
+            onOpenSettings={() => {
+              setSettingsOpen(true);
+              setNavOpen(false);
+            }}
+          />
 
           <div className="appwin__body">
             <div className="appwin__bar">
