@@ -10,7 +10,11 @@ Phase 2 builds the first consumers of it — regional demand, energy balance and
 ## Demo
 
 A 50-second walkthrough of the console: run a forecast, then follow the call into the
-forecast, balance, reliability, seasonal and investment modules. The recording is silent.
+forecast, balance, reliability, seasonal and investment modules.
+
+
+https://github.com/user-attachments/assets/dd061ce3-9c31-4ad6-9c31-5fcc67de703c
+
 
 [![re-forecast console walkthrough](docs/demo/re-forecast-demo.jpg)](docs/demo/re-forecast-demo.mp4)
 
