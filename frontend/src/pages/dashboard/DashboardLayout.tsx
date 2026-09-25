@@ -90,20 +90,22 @@ function Shell() {
               <span className="appwin__bar-meta">{result?.model_version ?? "xgb-q"} · p10/p50/p90</span>
             </div>
 
-            <ConsoleSummary />
+            <div className="appwin__scroll">
+              <ConsoleSummary />
 
-            <main className="appwin__content" id="main-content">
-              <Suspense
-                fallback={
-                  <div className="module__empty" role="status" aria-live="polite">
-                    <span className="module__empty-k">loading</span>
-                    <p>Loading module…</p>
-                  </div>
-                }
-              >
-                <Outlet />
-              </Suspense>
-            </main>
+              <main className="appwin__content" id="main-content">
+                <Suspense
+                  fallback={
+                    <div className="module__empty" role="status" aria-live="polite">
+                      <span className="module__empty-k">loading</span>
+                      <p>Loading module…</p>
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
+              </main>
+            </div>
           </div>
         </div>
 
