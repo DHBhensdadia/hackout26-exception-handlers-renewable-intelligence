@@ -421,8 +421,48 @@
     color: var(--lx-mut);
   }
 
-  /* status chips */
-  .csum__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* run signals — a flat status strip for the timeline, not a row of pills */
+  .csum__signals {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid var(--lx-line);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+    overflow: hidden;
+  }
+  .sig {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    min-width: 0;
+  }
+  .sig + .sig { border-left: 1px solid var(--lx-line); }
+  .sig__dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--lx-mut);
+  }
+  .sig__k {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--lx-faint);
+  }
+  .sig__v {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--lx-fg);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .sig--ok .sig__dot { background: var(--lx-ok); }
+  .sig--warn .sig__dot { background: var(--lx-warn); }
+  .sig--bad .sig__dot { background: var(--lx-bad); }
   .chip {
     display: inline-flex;
     align-items: center;
@@ -485,6 +525,8 @@
     .csum__metrics { gap: 10px; }
     .metric { padding: 12px 13px; }
     .appwin__content { padding: 14px 14px 26px; }
+    .csum__signals { flex-direction: column; }
+    .sig + .sig { border-left: 0; border-top: 1px solid var(--lx-line); }
     .hline__tick:nth-child(even) { display: none; }
   }
 

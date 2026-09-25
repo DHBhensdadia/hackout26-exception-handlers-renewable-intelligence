@@ -7,6 +7,15 @@ function hhmm(iso: string) {
   return `${String(d.getUTCHours()).padStart(2, "0")}:00`;
 }
 
+/** "03:00–04:00", marked "+1d" when the run crosses midnight so the range cannot be
+ *  misread as ending before it starts (e.g. a shortage from 10:00 to 02:00). */
+function windowRange(startIso: string, endIso: string) {
+  const a = new Date(startIso);
+  const b = new Date(endIso);
+  const crosses = a.getUTCDate() !== b.getUTCDate() || a.getUTCMonth() !== b.getUTCMonth();
+  return `${hhmm(startIso)}–${hhmm(endIso)}${crosses ? " (+1d)" : ""}`;
+}
+
 interface Run {
   state: "surplus" | "shortage";
   start: number;
@@ -135,23 +144,30 @@ export function ConsoleSummary() {
         </p>
       </div>
 
-      <div className="csum__chips">
+      <div className="csum__signals">
         {surplus && (
-          <span className="chip chip--ok">
-            <i />
-            Surplus {hhmm(pts[surplus.start].valid_time_utc)}–{hhmm(pts[surplus.end].valid_time_utc)} · charge storage
+          <span className="sig sig--ok">
+            <i className="sig__dot" aria-hidden="true" />
+            <span className="sig__k">Surplus</span>
+            <b className="sig__v">
+              {windowRange(pts[surplus.start].valid_time_utc, pts[surplus.end].valid_time_utc)}
+            </b>
           </span>
         )}
         {shortage && (
-          <span className="chip chip--warn">
-            <i />
-            Shortage {hhmm(pts[shortage.start].valid_time_utc)}–{hhmm(pts[shortage.end].valid_time_utc)} · hold backup
+          <span className="sig sig--warn">
+            <i className="sig__dot" aria-hidden="true" />
+            <span className="sig__k">Shortage</span>
+            <b className="sig__v">
+              {windowRange(pts[shortage.start].valid_time_utc, pts[shortage.end].valid_time_utc)}
+            </b>
           </span>
         )}
         {reli.maintenanceWindow && (
-          <span className="chip chip--ok">
-            <i />
-            Quietest <b>{reli.maintenanceWindow.start}</b> · {reli.windowLossMwh} MWh forgone
+          <span className="sig sig--ok">
+            <i className="sig__dot" aria-hidden="true" />
+            <span className="sig__k">Quietest</span>
+            <b className="sig__v">{reli.maintenanceWindow.start}</b>
           </span>
         )}
       </div>
