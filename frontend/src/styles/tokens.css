@@ -86,6 +86,28 @@
   src: url(/fonts/suse-var.ttf) format("truetype");
 }
 
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(/fonts/dmmono-light.woff2) format("woff2");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/dmmono-regular.woff2) format("woff2");
+}
+@font-face {
+  font-family: "DM Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/dmmono-medium.woff2) format("woff2");
+}
+
 :root {
   /* Surfaces */
   --bg: #08090a;
@@ -126,7 +148,7 @@
   --font-nav: "Quicksand", "Inter", system-ui, sans-serif;
   --font-display: "Josefin Sans", "Inter", system-ui, sans-serif;
   --font-body: "SUSE", "Inter", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono: "DM Mono", ui-monospace, monospace;
 
   --w-thin: 300;
   --w-reg: 400;
