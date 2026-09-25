@@ -44,6 +44,23 @@ previous single-lead model: [`reports/lead_comparison.json`](reports/lead_compar
 
 Two processes: the forecasting API, and the dashboard that consumes it.
 
+**Prerequisites.** Python 3.12 with [uv](https://docs.astral.sh/uv/) (`uv sync --extra dev`
+creates the environment), and Node 20+ to build the dashboard.
+
+**Get the model artifacts first.** The six trained XGBoost boosters (~160 MB) are not
+committed: `.gitignore` keeps the small `artifacts/*_metadata.json` sidecars but excludes
+the weights, and excludes `data/*` except a few Phase-2 outputs. A fresh clone therefore
+reports `"status": "degraded"` and `POST /forecast` answers 503 until artifacts exist. Two
+ways to get them:
+
+* drop a trained `artifacts/` in place - the six `solar_p10/p50/p90.json` and
+  `wind_p10/p50/p90.json` boosters together with the `solar_metadata.json` /
+  `wind_metadata.json` sidecars they were trained with. Prediction reads the feature order
+  and conformal calibration back out of those sidecars, so the weights and sidecars must
+  come from the same run; or
+* rebuild them from public sources with the Quick start pipeline below (the AEMO power
+  ingest, the weather corpus, then `reip.models.train`).
+
 ```bash
 # 1. Backend  (http://localhost:8000)
 uv run uvicorn reip.api.main:app --port 8000
@@ -69,11 +86,16 @@ cd frontend && npm run test       # includes live-API integration tests, skipped
 
 ```bash
 uv sync --extra dev
-uv run pytest                                        # 64 tests
+uv run pytest                                        # 121 tests (market tests skip until aemo_market.parquet exists)
 
 # Generation: real plant output, then matching multi-lead forecast weather
 uv run python -m reip.ingest.aemo                    # AEMO SCADA -> canonical parquet
-uv run python -m reip.ingest.build_corpus     --start 2025-05-01 --end 2026-08-31     --source previous_runs --corpus aemo_ml          # genuine 24/48/72h leads
+# Weather at genuine 24/48/72 h leads. The free Open-Meteo tier weights a request by
+# (days/14) x (variables/10); the full 151-site, 16-month pull approaches the 10k/day
+# limit, so `--limit N` narrows to the first N sites per technology for a faster first run.
+uv run python -m reip.ingest.build_corpus \
+  --start 2025-05-01 --end 2026-08-31 \
+  --source previous_runs --corpus aemo_ml
 
 # Market: regional demand, spot price, rooftop PV
 uv run python -m reip.ingest.aemo_market --years 3
