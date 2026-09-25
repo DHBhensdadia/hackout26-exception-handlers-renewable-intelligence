@@ -400,6 +400,45 @@
   color: var(--text-muted);
 }
 
+/* ---------- month strip (seasonal climatology) ---------- */
+.monthstrip {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+}
+.mchip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0.32rem 0.36rem;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.mchip b {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.mchip i {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.mchip--ok i { color: var(--c-green); }
+.mchip--warn i { color: var(--c-amber); }
+@media (max-width: 860px) {
+  .monthstrip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 460px) {
+  .monthstrip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 @media (max-width: 680px) {
   .note-row { grid-template-columns: 1fr; gap: 0.3rem; }
 }
