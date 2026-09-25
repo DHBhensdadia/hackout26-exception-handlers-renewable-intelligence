@@ -42,6 +42,9 @@ function Shell() {
   const site = result?.site_id ?? form.site_id;
   const tech = result?.tech ?? form.tech;
   const title = def.bar ? def.bar({ tech, h: horizon }) : def.title;
+  // The run summary belongs to Overview. Rendering it above every module made the same
+  // four KPIs and timeline reappear under each page title, blurring what was page-specific.
+  const isOverview = pathname === "/dashboard";
 
   return (
     <div className="console-page">
@@ -91,7 +94,7 @@ function Shell() {
             </div>
 
             <div className="appwin__scroll">
-              <ConsoleSummary />
+              {isOverview && <ConsoleSummary />}
 
               <main className="appwin__content" id="main-content">
                 <Suspense
