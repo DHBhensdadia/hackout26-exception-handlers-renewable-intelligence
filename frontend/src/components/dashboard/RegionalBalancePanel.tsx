@@ -132,7 +132,7 @@ export function RegionalBalancePanel({ site, horizonH }: { site: SiteRecord; hor
           </span>
         </div>
         {peakSurplus && peakSurplus.p_surplus > 0.01 && (
-          <div className="note-row">
+          <div className="note-row note-row--warn">
             <span className="note-row__k">Peak surplus risk</span>
             <span className="note-row__v">
               {Math.round(peakSurplus.p_surplus * 100)}% at{" "}

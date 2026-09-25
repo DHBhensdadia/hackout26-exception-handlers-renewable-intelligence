@@ -45,7 +45,7 @@ export function ReliabilityPanel({
             {forecast.points.length} h · conditions read from the forecast series
           </span>
         </div>
-        <div className="note-row">
+        <div className={`note-row${r.maintenanceWindow ? " note-row--ok" : " note-row--warn"}`}>
           <span className="note-row__k">Maintenance</span>
           <span className="note-row__v">
             {r.maintenanceWindow

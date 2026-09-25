@@ -21,9 +21,15 @@ export default function BalanceModule() {
     <Module def={MODULES[2]}>
       {({ forecast, derived }) => (
         <>
-          <h3 className="panel-subhead">Regional balance — backend, calibrated probabilities</h3>
+          <h3 className="panel-subhead">
+            <span className="panel-subhead__k">Regional balance</span>
+            <span className="panel-subhead__m">backend · calibrated probabilities</span>
+          </h3>
           {site ? <RegionalBalancePanel site={site} horizonH={form.horizon_h} /> : null}
-          <h3 className="panel-subhead">Site balance — in-browser, single plant</h3>
+          <h3 className="panel-subhead">
+            <span className="panel-subhead__k">Site balance</span>
+            <span className="panel-subhead__m">in-browser · single plant</span>
+          </h3>
           <BalancePanel forecast={forecast} derived={derived} />
         </>
       )}
