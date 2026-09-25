@@ -156,18 +156,103 @@ failure mode that silently destroys ML systems — offline scores stay excellent
 predictions drift — and a single code path is the only real defence. Test T1 asserts both
 call sites produce byte-identical matrices.
 
+## Architecture
+
+One connected pipeline rather than four separate tools: the forecast is the contract every
+later module consumes.
+
+```mermaid
+flowchart LR
+  subgraph DATA["Data sources"]
+    direction TB
+    SCADA["AEMO SCADA<br/>5-min plant output"]
+    NWP["Open-Meteo Previous Runs<br/>genuine 24 / 48 / 72 h leads"]
+    MARKET["AEMO market<br/>demand · price · rooftop PV"]
+  end
+
+  subgraph PIPE["Pipeline · src/reip"]
+    direction TB
+    INGEST["Ingest to canonical parquet"]
+    PHYSICS["Physics priors<br/>pvlib · power curve · clear-sky"]
+    FEATURES["features/build.py<br/>one shared train/serve path"]
+    TRAIN["Train · 6 quantile GBDT boosters<br/>site-disjoint split · conformal calibration"]
+    ART["artifacts/ · weights + metadata"]
+  end
+
+  subgraph PHASE2["Operational intelligence"]
+    direction TB
+    DEMAND["Regional demand model"]
+    SCEN["200-scenario coherent ensemble"]
+    RESID["Residual load + isotonic calibration"]
+    DISPATCH["Two-stage stochastic LP<br/>storage dispatch"]
+    SEAS["Measured month x hour climatology"]
+  end
+
+  subgraph SERVING["Serving · FastAPI"]
+    direction TB
+    FORECAST["/forecast · /demand"]
+    DECIDE["/balance · /storage/dispatch<br/>/seasonal · /vss · /regions · /sites"]
+  end
+
+  UI["React 19 dashboard<br/>7 decision modules"]
+
+  SCADA --> INGEST
+  NWP --> INGEST
+  MARKET --> INGEST
+  INGEST --> FEATURES
+  PHYSICS --> FEATURES
+  FEATURES --> TRAIN --> ART
+  ART --> FORECAST
+  MARKET --> DEMAND
+  ART --> SCEN
+  DEMAND --> SCEN
+  SCEN --> RESID --> DISPATCH
+  MARKET --> SEAS
+  DEMAND --> DECIDE
+  RESID --> DECIDE
+  DISPATCH --> DECIDE
+  SEAS --> DECIDE
+  FORECAST --> UI
+  DECIDE --> UI
+```
+
+**Training** turns measured plant output and archived NWP into six quantile boosters
+(p10/p50/p90 × solar/wind) plus a metadata sidecar that pins the feature order and the
+conformal widening. **Serving** loads that sidecar, asserts the feature order, denormalises
+and clamps, and returns a calibrated `SiteForecast`. The **operational-intelligence** layer
+reads the same canonical store: a regional demand model, a 200-scenario coherent ensemble
+built by resampling historical residual blocks, an isotonic-calibrated surplus/shortage
+model, a two-stage stochastic LP for storage dispatch, and a measured month × hour
+climatology. The React console consumes the API and never re-derives the forecast.
+
 ## Layout
 
+**Backend — `src/reip/`**
+
 ```
-src/reip/
-  schemas.py          all data contracts; the forecast contract Phase 2 consumes
-  sites/              site registry (GEFCom training zones + Gujarat demo sites)
-  ingest/             gefcom.py (training corpus), openmeteo.py (serving weather)
-  physics/            solar.py, wind.py, clearsky.py, fit_location.py
-  features/build.py   THE shared feature path — the skew boundary
-  models/             train.py, predict.py, backends.py
-  eval/               baselines.py, metrics.py, report.py
-  api/main.py         POST /forecast, GET /sites, GET /health
+schemas.py           all data contracts; the forecast contract Phase 2 consumes
+sites/               site registry (172 entries; 151 in training)
+ingest/              aemo.py, aemo_market.py, openmeteo.py, weather_bulk.py, build_corpus.py
+physics/             solar.py, wind.py, clearsky.py, fit_location.py, fit_plant.py
+features/build.py    THE shared feature path — the skew boundary
+models/              train.py, predict.py, backends.py, splits.py, demand/
+portfolio/           200-scenario coherent ensemble from residual blocks
+balance/             residual.py, calibration.py, precompute.py
+storage/             asset.py, dispatch.py (two-stage stochastic LP)
+seasonal/            patterns.py (measured month × hour climatology)
+eval/                baselines.py, metrics.py, report.py, vss.py, scenarios.py
+api/main.py          FastAPI — /forecast, /demand, /balance, /seasonal, /storage/dispatch, …
+```
+
+**Frontend — `frontend/`**
+
+```
+src/api/             client.ts (mock + live), mock.ts
+src/hooks/           useDashboard.ts (run state), useMeasure.ts
+src/lib/derive/      pure domain logic — balance, reliability, seasonal, demand, investment
+src/components/      charts/ (hand-built SVG bands), dashboard/, ui/
+src/pages/dashboard/ DashboardLayout, Sidebar, ControlsDrawer, 7 modules
+src/styles/          tokens.css + hand-written CSS (hairline ruled grid)
 ```
 
 ## Tests
