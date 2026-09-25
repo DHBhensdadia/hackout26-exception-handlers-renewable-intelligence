@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { MapPinOff, TriangleAlert } from "lucide-react";
 import { isAbortError, regionalBalance } from "@/api/client";
 import type { BalanceResponse, SiteRecord } from "@/types";
+import { Callout } from "../ui/Callout";
 import { Cell, CellGrid } from "../ui/CellGrid";
 
 /**
@@ -61,14 +63,19 @@ export function RegionalBalancePanel({ site, horizonH }: { site: SiteRecord; hor
 
   if (!region) {
     return (
-      <p className="module-note">
-        {site.name} sits outside the NEM, so there is no regional demand series to balance it
-        against. Pick an Australian site to see the regional balance.
-      </p>
+      <Callout tone="empty" label="Outside the NEM" icon={MapPinOff}>
+        {site.name} sits outside the NEM, so there is no regional demand series to balance it against. Pick an
+        Australian site to see the regional balance.
+      </Callout>
     );
   }
-  if (loading && !data) return <p className="module-note">Loading regional balance for {region}…</p>;
-  if (error) return <p className="module-note">Regional balance unavailable — {error}</p>;
+  if (loading && !data) return <Callout tone="muted">Loading regional balance for {region}…</Callout>;
+  if (error)
+    return (
+      <Callout tone="warn" label="Regional balance unavailable" icon={TriangleAlert}>
+        {error}
+      </Callout>
+    );
   if (!data) return null;
 
   const points = data.points;
@@ -170,7 +177,9 @@ export function RegionalBalancePanel({ site, horizonH }: { site: SiteRecord; hor
         </table>
       )}
 
-      <p className="module-note">{data.data_note}</p>
+      <Callout tone="info" label="Model note">
+        {data.data_note}
+      </Callout>
     </>
   );
 }
