@@ -164,6 +164,8 @@ def test_demand_endpoint_agrees_with_balance(client):
 def test_dispatch_returns_a_feasible_schedule(client):
     if not (get_settings().data_canonical / "ensemble_SA1.npz").exists():
         pytest.skip("no scenario ensemble")
+    if not (get_settings().data_canonical / "aemo_market.parquet").exists():
+        pytest.skip("no market corpus; storage dispatch needs grid limits")
     body = client.post(
         "/storage/dispatch", json={"region": "SA1", "energy_mwh": 200, "power_mw": 100}
     ).json()
@@ -183,6 +185,8 @@ def test_a_bigger_battery_never_costs_more(client):
     """Storage is optional, so the optimiser can always ignore extra capacity."""
     if not (get_settings().data_canonical / "ensemble_SA1.npz").exists():
         pytest.skip("no scenario ensemble")
+    if not (get_settings().data_canonical / "aemo_market.parquet").exists():
+        pytest.skip("no market corpus; storage dispatch needs grid limits")
     small = client.post(
         "/storage/dispatch", json={"region": "SA1", "energy_mwh": 100, "power_mw": 50}
     ).json()["expected_cost_aud"]
