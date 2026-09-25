@@ -7,6 +7,13 @@ of that spec makes forecasting the central model that Modules 2–7 all consume,
 delivers not just a model but **the forecast contract those six modules are built against**.
 Phase 2 builds the first consumers of it — regional demand, energy balance and storage.
 
+## Demo
+
+A 50-second walkthrough of the console: run a forecast, then follow the call into the
+forecast, balance, reliability, seasonal and investment modules. The recording is silent.
+
+[![re-forecast console walkthrough](docs/demo/re-forecast-demo.jpg)](docs/demo/re-forecast-demo.mp4)
+
 ## Results
 
 Two numbers matter, and they answer different questions. Both are normalised by installed
