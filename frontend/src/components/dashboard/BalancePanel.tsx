@@ -36,7 +36,7 @@ export function BalancePanel({ forecast, derived }: { forecast: ForecastResponse
       <BalanceChart hours={balance.hours} capacity={forecast.capacity_mw} storage={storage} />
 
       <div className="notes-grid">
-        <div className="note-row">
+        <div className="note-row note-row--bad">
           <span className="note-row__k">Worst deficit</span>
           <span className="note-row__v">
             {balance.worstShortage ? (
@@ -50,7 +50,7 @@ export function BalancePanel({ forecast, derived }: { forecast: ForecastResponse
             )}
           </span>
         </div>
-        <div className="note-row">
+        <div className="note-row note-row--warn">
           <span className="note-row__k">Storage sizing</span>
           <span className="note-row__v">
             {balance.curtailEnergy > 0.5
@@ -58,7 +58,7 @@ export function BalancePanel({ forecast, derived }: { forecast: ForecastResponse
               : `No curtailment inside the horizon — the ${storage.capacity_mwh} MWh installed absorbs every surplus hour. Sizing on p50 still under-provisions the wider p90 band; plan storage against p90.`}
           </span>
         </div>
-        <div className="note-row">
+        <div className="note-row note-row--accent">
           <span className="note-row__k">Recommended dispatch</span>
           <span className="note-row__v">
             {balance.verdict.action}. Charge windows: {balance.chargeEnergy} MWh; discharge covers{" "}

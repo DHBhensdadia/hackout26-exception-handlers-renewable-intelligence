@@ -60,7 +60,7 @@ export function SeasonalPanel({
       <SeasonalHeatGrid seasonal={seasonal} />
 
       <div className="notes-grid">
-        <div className="note-row">
+        <div className="note-row note-row--accent">
           <span className="note-row__k">How to read it</span>
           <span className="note-row__v">
             One cell per month × hour pair, median residual across {seasonal.window_years} years. Green recurs in
@@ -68,13 +68,27 @@ export function SeasonalPanel({
             deficit — you only build storage for energy the region can use.
           </span>
         </div>
-        <div className="note-row">
+        <div className="note-row note-row--stack">
           <span className="note-row__k">Month means</span>
           <span className="note-row__v">
-            {months.map((m) => `${m.month} ${m.residual > 0 ? "+" : ""}${m.residual}`).join("  ·  ")} MW
+            <span className="monthstrip" role="list" aria-label="Median residual by month (MW)">
+              {months.map((m) => (
+                <span
+                  key={m.month}
+                  role="listitem"
+                  className={`mchip${m.residual > 0 ? " mchip--ok" : " mchip--warn"}`}
+                >
+                  <b>{m.month}</b>
+                  <i>
+                    {m.residual > 0 ? "+" : ""}
+                    {m.residual}
+                  </i>
+                </span>
+              ))}
+            </span>
           </span>
         </div>
-        <div className="note-row">
+        <div className="note-row note-row--warn">
           <span className="note-row__k">Source gap</span>
           <span className="note-row__v">
             <code>GET /seasonal/&#123;region&#125;</code> is cut, so this grid is computed in the client from a

@@ -1,5 +1,7 @@
+import { ShieldAlert } from "lucide-react";
 import type { ForecastResponse } from "@/types";
 import type { DerivedDashboard } from "@/hooks/useDashboard";
+import { Callout } from "../ui/Callout";
 import { Cell, CellGrid } from "../ui/CellGrid";
 
 /**
@@ -45,7 +47,7 @@ export function ReliabilityPanel({
             {forecast.points.length} h · conditions read from the forecast series
           </span>
         </div>
-        <div className="note-row">
+        <div className={`note-row${r.maintenanceWindow ? " note-row--ok" : " note-row--warn"}`}>
           <span className="note-row__k">Maintenance</span>
           <span className="note-row__v">
             {r.maintenanceWindow
@@ -55,7 +57,9 @@ export function ReliabilityPanel({
         </div>
       </div>
 
-      <p className="module-note">{r.unavailable}</p>
+      <Callout tone="info" label="No reliability model" icon={ShieldAlert}>
+        {r.unavailable}
+      </Callout>
     </>
   );
 }

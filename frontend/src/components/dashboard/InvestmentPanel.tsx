@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import type { DerivedDashboard } from "@/hooks/useDashboard";
 import { investmentScenarios, type Allocation } from "@/lib/derive";
+import { Callout } from "../ui/Callout";
 
 const allocClass: Record<Allocation["tech"], string> = {
   Solar: "alloc--solar",
@@ -111,10 +113,10 @@ export function InvestmentPanel({ derived }: { derived: DerivedDashboard }) {
         ))}
       </div>
 
-      <p className="panel-note">
+      <Callout tone="info" label="Assumptions" icon={Info}>
         Scenario comparison on a ₹{budget} cr budget — modelled costs and returns, not a guaranteed financial
         forecast. Storage is included in every scenario that carries it; siting and timing are out of scope here.
-      </p>
+      </Callout>
     </>
   );
 }

@@ -42,6 +42,9 @@ function Shell() {
   const site = result?.site_id ?? form.site_id;
   const tech = result?.tech ?? form.tech;
   const title = def.bar ? def.bar({ tech, h: horizon }) : def.title;
+  // The run summary belongs to Overview. Rendering it above every module made the same
+  // four KPIs and timeline reappear under each page title, blurring what was page-specific.
+  const isOverview = pathname === "/dashboard";
 
   return (
     <div className="console-page">
@@ -75,7 +78,14 @@ function Shell() {
         </div>
 
         <div className="appwin__grid">
-          <Sidebar open={navOpen} onClose={() => setNavOpen(false)} onOpenSettings={() => setSettingsOpen(true)} />
+          <Sidebar
+            open={navOpen}
+            onClose={() => setNavOpen(false)}
+            onOpenSettings={() => {
+              setSettingsOpen(true);
+              setNavOpen(false);
+            }}
+          />
 
           <div className="appwin__body">
             <div className="appwin__bar">
@@ -83,20 +93,22 @@ function Shell() {
               <span className="appwin__bar-meta">{result?.model_version ?? "xgb-q"} · p10/p50/p90</span>
             </div>
 
-            <ConsoleSummary />
+            <div className="appwin__scroll">
+              {isOverview && <ConsoleSummary />}
 
-            <main className="appwin__content" id="main-content">
-              <Suspense
-                fallback={
-                  <div className="module__empty" role="status" aria-live="polite">
-                    <span className="module__empty-k">loading</span>
-                    <p>Loading module…</p>
-                  </div>
-                }
-              >
-                <Outlet />
-              </Suspense>
-            </main>
+              <main className="appwin__content" id="main-content">
+                <Suspense
+                  fallback={
+                    <div className="module__empty" role="status" aria-live="polite">
+                      <span className="module__empty-k">loading</span>
+                      <p>Loading module…</p>
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
+              </main>
+            </div>
           </div>
         </div>
 
