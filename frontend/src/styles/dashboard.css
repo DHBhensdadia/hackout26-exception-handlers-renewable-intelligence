@@ -222,12 +222,65 @@
   font-size: 0.74rem;
   color: var(--text-secondary);
 }
+/* ---------- annotation callouts ---------- */
+.callout,
+.module-note,
 .panel-note {
-  margin-top: 1rem;
-  font-size: 0.78rem;
-  line-height: 1.6;
+  margin-top: 1.2rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--accent-2);
+  border-radius: var(--r-md);
+  background: var(--bg-elevated);
+  max-width: 96ch;
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.callout {
+  display: flex;
+  gap: 0.7rem;
+}
+.callout__ico {
+  flex: none;
+  margin-top: 0.12rem;
   color: var(--text-muted);
-  max-width: 82ch;
+}
+.callout__body { min-width: 0; }
+.callout__k {
+  display: block;
+  margin-bottom: 0.32rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.callout--info .callout__ico { color: var(--accent-2); }
+.callout--warn {
+  border-left-color: var(--c-amber);
+  background: rgba(226, 163, 60, 0.05);
+}
+.callout--warn .callout__ico { color: var(--c-amber); }
+.callout--empty {
+  border-left-color: var(--accent-2);
+  background: rgba(94, 106, 210, 0.06);
+}
+.callout--empty .callout__ico { color: var(--accent-2); }
+.callout--muted {
+  border-left-color: var(--hairline-strong);
+  background: transparent;
+}
+.callout__v code,
+.note-row__v code {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 0.04rem 0.34rem;
+  border: 1px solid rgba(110, 121, 224, 0.3);
+  border-radius: 4px;
+  background: rgba(94, 106, 210, 0.12);
+  color: #c3c8ff;
 }
 .rows {
   margin-top: 1.2rem;
@@ -531,7 +584,10 @@
 .rtable__n--bad { color: var(--c-red); }
 .rtable__muted { font-size: 0.72rem; color: var(--text-muted); }
 .rtable__caveat { font-size: 0.72rem; color: var(--c-amber); }
-.panel-note--warn { color: var(--c-amber); }
+.panel-note--warn {
+  border-left-color: var(--c-amber);
+  background: rgba(226, 163, 60, 0.05);
+}
 @media (max-width: 760px) {
   .rtable__head { display: none; }
   .rtable__row { grid-template-columns: 58px 1fr auto; gap: 0.4rem 0.7rem; }
